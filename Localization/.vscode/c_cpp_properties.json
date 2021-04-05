@@ -3,7 +3,13 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/Localization/inc"
+                "${workspaceFolder}/inc",
+                "${workspaceFolder}/third_party/Pangolin/install/include",
+                "${workspaceFolder}/third_party/opencv/install/include",
+                "${workspaceFolder}/third_party/nlohmann_json/install/include",
+                "${workspaceFolder}/third_party/DBoW2",
+                "${workspaceFolder}/third_party/g2o",
+                "/usr/include/eigen3"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",
