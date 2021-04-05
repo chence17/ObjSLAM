@@ -35,12 +35,12 @@ class LoopClosing;
 
 class System {
  public:
-  // eSensor: 枚举类型, 用于表示SLAM系统所使用的传感器类型
+  // eSensor: 枚举类型, 用于表示SLAM系统所使用的传感器类型.
   enum eSensor { MONOCULAR = 0, STEREO = 1, RGBD = 2 };
 
  public:
   /**
-   * @brief: System 构造函数, 用来初始化整个系统。
+   * @brief: System 构造函数, 用来初始化整个系统.
    * @note:
    * @param strVocFile:
    * * ORB词袋数据.
@@ -59,7 +59,7 @@ class System {
   // grayscale. Returns the camera pose (empty if tracking fails).
   // TODO: 开环VO输出相关, 后端优化控制相关
   /**
-   * @brief 双目相机入口(TrackStereo)函数
+   * @brief 双目相机入口(TrackStereo)函数.
    * @note
    * * 每次输入数据以后, 会执行三种操作:
    * * 1) 判断是否需要进入或者退出纯定位模式, 如果需要则执行
@@ -71,8 +71,8 @@ class System {
    * @param imRight:
    * * 右目图像, 彩色图(CV_8UC3)或者灰度图(CV_8U), 彩色图会被自动转换为灰度图.
    * @param timestamp:
-   * * 时间戳
-   * @return cv::Mat 输入帧的相机位姿, 如果跟踪失败则为空
+   * * 时间戳.
+   * @return cv::Mat 输入帧的相机位姿, 如果跟踪失败则为空.
    */
   cv::Mat TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight,
                       const double &timestamp);
