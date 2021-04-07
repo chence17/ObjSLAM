@@ -1,7 +1,7 @@
 /*
  * @Author: Antonio Chan
  * @Date: 2021-04-06 16:56:50
- * @LastEditTime: 2021-04-06 19:02:17
+ * @LastEditTime: 2021-04-07 18:52:45
  * @LastEditors: Antonio Chan
  * @Description: Modified from ORB-SLAM2
  * @FilePath: /Localization/inc/MapPoint.h
@@ -18,6 +18,9 @@
 #include "Frame.h"
 #include "KeyFrame.h"
 #include "Map.h"
+
+#include <map>
+#include <vector>
 
 namespace ORB_SLAM2
 {
@@ -305,7 +308,5 @@ namespace ORB_SLAM2
     };
 
 } //namespace ORB_SLAM
-
-#endif // MAPPOINT_H
 
 #endif // INC_MAPPOINT_H_

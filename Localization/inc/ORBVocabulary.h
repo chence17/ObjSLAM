@@ -1,12 +1,20 @@
+/*
+ * @Author: Antonio Chan
+ * @Date: 2021-04-06 16:56:50
+ * @LastEditTime: 2021-04-07 18:42:17
+ * @LastEditors: Antonio Chan
+ * @Description: Modified from ORB-SLAM2
+ * @FilePath: /Localization/inc/ORBVocabulary.h
+ */
 /**
  * @file ORBVocabulary.h
  * @author guoqing (1337841346@qq.com)
  * @brief 词袋模型相关
  * @version 0.1
  * @date 2019-04-26
- * 
+ *
  * @copyright Copyright (c) 2019
- * 
+ *
  */
 
 /**
@@ -29,18 +37,17 @@
 * along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #ifndef ORBVOCABULARY_H
 #define ORBVOCABULARY_H
 
-#include "Thirdparty/DBoW2/DBoW2/FORB.h"
-#include "Thirdparty/DBoW2/DBoW2/TemplatedVocabulary.h"
+#include "third_party/DBoW2/DBoW2/FORB.h"
+#include "third_party/DBoW2/DBoW2/TemplatedVocabulary.h"
 
 namespace ORB_SLAM2
 {
-// 只是增加了一个自定义的数据类型罢了
-typedef DBoW2::TemplatedVocabulary<DBoW2::FORB::TDescriptor, DBoW2::FORB>
-  ORBVocabulary;
+  // 只是增加了一个自定义的数据类型罢了
+  typedef DBoW2::TemplatedVocabulary<DBoW2::FORB::TDescriptor, DBoW2::FORB>
+      ORBVocabulary;
 
 } //namespace ORB_SLAM
 
