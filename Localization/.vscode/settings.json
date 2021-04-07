@@ -73,6 +73,7 @@
     "cSpell.words": [
         "Eigen",
         "RGBD",
+        "kitti",
         "nlohmann"
     ],
     "fileheader.customMade": {

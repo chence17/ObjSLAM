@@ -117,7 +117,7 @@ nlohmann
 
 3.9.1
 
-```
+```bash
 cd nlohmann_json
 mkdir install
 mkdir build && cd build

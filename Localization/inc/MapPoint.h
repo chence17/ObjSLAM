@@ -1,7 +1,7 @@
 /*
  * @Author: Antonio Chan
- * @Date: 2021-04-04 21:27:51
- * @LastEditTime: 2021-04-05 16:18:49
+ * @Date: 2021-04-06 16:56:50
+ * @LastEditTime: 2021-04-06 19:02:17
  * @LastEditors: Antonio Chan
  * @Description: Modified from ORB-SLAM2
  * @FilePath: /Localization/inc/MapPoint.h
@@ -10,230 +10,302 @@
 #ifndef INC_MAPPOINT_H_
 #define INC_MAPPOINT_H_
 
+// 公用库.
 #include <mutex>
 #include <opencv2/core/core.hpp>
 
+// ORB-SLAM2中的其他模块.
 #include "Frame.h"
 #include "KeyFrame.h"
 #include "Map.h"
 
-namespace ORB_SLAM2 {
+namespace ORB_SLAM2
+{
+    // 需要使用到的其他模块的前置声明.
+    class KeyFrame;
+    class Map;
+    class Frame;
 
-class KeyFrame;
-class Map;
-class Frame;
+    // 地图点数据类型(一个MapPoint代表一个地图点)
+    class MapPoint
+    {
+    public:
+        /**
+         * @brief 给定坐标与keyframe构造MapPoint
+         * @note 被调用: 双目：StereoInitialization()，CreateNewKeyFrame()，LocalMapping::CreateNewMapPoints() 单目：CreateInitialMapMonocular()，LocalMapping::CreateNewMapPoints()
+         * @param Pos:MapPoint的坐标（wrt世界坐标系）
+         * @param pRefKF:KeyFrame
+         * @param pMap:Map
+         */
+        MapPoint(const cv::Mat &Pos, KeyFrame *pRefKF, Map *pMap);
 
-/**
- * @description:
- * * MapPoint是地图中的特征点，它自身的参数是三维坐标和描述子，在这个类中它需要完成的主要工作有以下方面：
- * * 1）维护关键帧之间的共视关系
- * * 2）通过计算描述向量之间的距离，在多个关键帧的特征点中找最匹配的特征点
- * * 3）在闭环完成修正后，需要根据修正的主帧位姿修正特征点
- * * 4）对于非关键帧，也产生MapPoint，只不过是给Tracking功能临时使用
- */
-class MapPoint {
- public:
-  /**
-   * @description:
-   * * 关键帧相关的地图点构造函数,
-   * * 和关键帧相关的地图点构造函数主要是突出地图点和关键帧之间的观测关系,
-   * * 参考关键帧是哪一帧, 该地图点被哪些关键帧观测到.
-   * * 一个地图点会被多个关键帧观测到,
-   * * 多个关键帧之间通过共同观测到地图点而发生的关系叫共视关系, 在ORB-SLAM2中,
-   * * 就是通过MapPoint类来维护共视关系的. 在进行局部BA优化时,
-   * * 只优化具有共视关系的这些关键帧, 其他关键帧的位姿不参与优化.
-   * @param Pos:
-   * * 地图点的3D位置
-   * @param pRefKF:
-   * * 参考关键帧
-   * @param pMap:
-   * * 地图
-   */
-  MapPoint(const cv::Mat& Pos, KeyFrame* pRefKF, Map* pMap);
+        /**
+         * @brief 给定坐标与frame构造MapPoint
+         * @note 被双目：UpdateLastFrame()调用
+         * @param Pos: MapPoint的坐标（世界坐标系）
+         * @param pMap: Map
+         * @param pFrame: Frame
+         * @param idxF: MapPoint在Frame中的索引，即对应的特征点的编号
+         */
+        MapPoint(const cv::Mat &Pos, Map *pMap, Frame *pFrame, const int &idxF);
 
-  /**
-   * @description:
-   * * 普通帧相关的地图点构造函数
-   * @param Pos:
-   * * 地图点的3D位置
-   * @param pMap:
-   * * 地图
-   * @param pFrame:
-   * * 对应的普通帧
-   * @param idxF:
-   * * 地图点在该帧特征点中的索引号
-   */
-  MapPoint(const cv::Mat& Pos, Map* pMap, Frame* pFrame, const int& idxF);
+        /**
+         * @brief: 设置世界坐标系下地图点的位姿
+         * @note note
+         * @param Pos: 世界坐标系下地图点的位姿
+         * @return None
+         */
+        void SetWorldPos(const cv::Mat &Pos);
 
-  void SetWorldPos(const cv::Mat& Pos);
-  cv::Mat GetWorldPos();
+        /**
+         * @brief 获取当前地图点在世界坐标系下的位置
+         * @note note
+         * @return cv::Mat 位置
+         */
+        cv::Mat GetWorldPos();
 
-  cv::Mat GetNormal();
-  KeyFrame* GetReferenceKeyFrame();
+        /**
+         * @brief 获取当前地图点的平均观测方向
+         * @note note
+         * @return cv::Mat 一个向量 #TODO
+         */
+        cv::Mat GetNormal();
 
-  std::map<KeyFrame*, size_t> GetObservations();
-  int Observations();
+        /**
+         * @brief 获取生成当前地图点的参考关键帧
+         * @note note
+         * @return KeyFrame* #TODO
+         */
+        KeyFrame *GetReferenceKeyFrame();
 
-  /**
-   * @brief  增加地图点与共视关键帧的观测关系
-   * @note
-   * * 判断共视关键帧是否已经在观测关系中了，如果是，这里就不会添加；如果不是，往下记录下此关键帧以及此MapPoint的索引，就算是记录下观测信息了
-   * @param  pKF: 待添加共视关系的关键帧
-   * @param  idx: 该地图点在待添加共视关系的关键帧中对应的索引值
-   * @retval None
-   */
-  void AddObservation(KeyFrame* pKF, size_t idx);
-  /**
-   * @brief  删除地图点与共视关键帧的观测关系
-   * @note
-   * * 这个函数首先判断该关键帧是否在观测中，如果在，就从存放观测关系的容器mObservations中移除该关键帧，接着判断该帧是否是参考关键帧，如果是，参考关键帧换成观测的第一帧，因为不能没有参考关键帧呀。删除以后，如果该MapPoint被观测的次数小于2，那么这个MapPoint就没有存在的必要了，需要删除。
-   * @param  pKF: 待删除共视关系的关键帧
-   * @retval None
-   */
-  void EraseObservation(KeyFrame* pKF);
+        /**
+         * @brief 获取观测到当前地图点的关键帧
+         * @note note
+         * @return std::map<KeyFrame*,size_t> 观测到当前地图点的关键帧序列, size_t 这个对象对应为该地图点在该关键帧的特征点的访问id
+         */
+        std::map<KeyFrame *, size_t> GetObservations();
 
-  int GetIndexInKeyFrame(KeyFrame* pKF);
-  bool IsInKeyFrame(KeyFrame* pKF);
+        /**
+         * @brief: 获取当前地图点的被观测次数
+         * @note note
+         * @return int #TODO
+         */
+        int Observations();
 
-  /**
-   * @brief  删除地图点
-   * @note
-   * * 它的作用就是删除地图点，并清除关键帧和地图中所有和该地图点对应的关联关系
-   * @retval None
-   */
-  void SetBadFlag();
-  bool isBad();
+        /**
+         * @brief 添加观测
+         * @note 记录哪些KeyFrame的那个特征点能观测到该MapPoint并增加观测的相机数目nObs，单目+1，双目或者grbd+2, 这个函数是建立关键帧共视关系的核心函数，能共同观测到某些MapPoints的关键帧是共视关键帧
+         * @param pKF: 观测到当前地图点的关键帧
+         * @param idx: 在KeyFrame中的索引
+         */
+        void AddObservation(KeyFrame *pKF, size_t idx);
 
-  /**
-   * @brief  替换地图点
-   * @note
-   * * 该函数的作用是将当前地图点(this)，替换成pMp，这主要是因为在使用闭环时，完成闭环优化以后，需要调整地图点和关键帧，建立新的关系。
-   * * 具体流程是循环遍历所有的观测信息，判断此MapPoint是否在该关键帧中，如果在，那么只要移除原来MapPoint的匹配信息，最后增加这个MapPoint找到的数量以及可见的次数，另外地图中要移除原来的那个MapPoint。最后需要计算这个点独有的描述子。
-   * @param  pMP: 用来替换的地图点
-   * @retval None
-   */
-  void Replace(MapPoint* pMP);
-  MapPoint* GetReplaced();
+        /**
+         * @brief 取消某个关键帧对当前地图点的观测
+         * @note 如果某个关键帧要被删除，那么会发生这个操作
+         * @param[in] pKF
+         */
+        void EraseObservation(KeyFrame *pKF);
 
-  void IncreaseVisible(int n = 1);
-  void IncreaseFound(int n = 1);
-  float GetFoundRatio();
-  inline int GetFound() { return mnFound; }
+        /**
+         * @brief 获取观测到当前地图点的关键帧,在观测数据中的索引
+         * @note
+         * @param pKF: 关键帧
+         * @return int 索引
+         */
+        int GetIndexInKeyFrame(KeyFrame *pKF);
 
-  /**
-   * @brief  计算最匹配的描述子
-   * @note
-   * * 由于一个MapPoint会被许多相机观测到，因此在插入关键帧后，需要判断是否更新当前点的最适合的描述子。最好的描述子与其他描述子应该具有最小的平均距离，因此先获得当前点的所有描述子，然后计算描述子之间的两两距离，对所有距离取平均，最后找离这个中值距离最近的描述子。
-   * @retval None
-   */
-  void ComputeDistinctiveDescriptors();
+        /**
+         * @brief 查看某个关键帧是否看到了当前的地图点
+         * @note
+         * @param[in] pKF   关键帧
+         * @return bool #TODO
+         */
+        bool IsInKeyFrame(KeyFrame *pKF);
 
-  cv::Mat GetDescriptor();
+        /**
+         * @brief 告知可以观测到该MapPoint的Frame，该MapPoint已被删除
+         */
+        void SetBadFlag();
 
-  /**
-   * @brief  更新法向量和深度值
-   * @note
-   * * 由于图像提取描述子是使用金字塔分层提取，所以计算法向量和深度可以知道该MapPoint在对应的关键帧的金字塔哪一层可以提取到。
-   * * 明确了目的，下一步就是方法问题，所谓的法向量，就是也就是说相机光心指向地图点的方向，计算这个方向方法很简单，只需要用地图点的三维坐标减去相机光心的三维坐标就可以。
-   * @retval None
-   */
-  void UpdateNormalAndDepth();
+        /**
+          * @brief 判断当前地图点是否是bad
+          *
+          * @return true
+          * @return false
+          */
+        bool isBad();
 
-  float GetMinDistanceInvariance();
-  float GetMaxDistanceInvariance();
+        /**
+         * @brief 在形成闭环的时候，会更新 KeyFrame 与 MapPoint 之间的关系其实也就是相互替换?
+         * @param[in] pMP 地图点
+         */
+        void Replace(MapPoint *pMP);
 
-  // 下图中横线的大小表示不同图层图像上的一个像素表示的真实物理空间中的大小
-  //              ____
-  // Nearer      /____\     level:n-1 --> dmin
-  //            /______\                       d/dmin = 1.2^(n-1-m)
-  //           /________\   level:m   --> d
-  //          /__________\                     dmax/d = 1.2^m
-  // Farther /____________\ level:0   --> dmax
-  //
-  //           log(dmax/d)
-  // m = ceil(------------)
-  //            log(1.2)
-  // 这个函数的作用:
-  // 在进行投影匹配的时候会给定特征点的搜索范围,考虑到处于不同尺度(也就是距离相机远近,位于图像金字塔中不同图层)的特征点受到相机旋转的影响不同,
-  // 因此会希望距离相机近的点的搜索范围更大一点,距离相机更远的点的搜索范围更小一点,所以要在这里,根据点到关键帧/帧的距离来估计它在当前的关键帧/帧中,
-  // 会大概处于哪个尺度
+        /**
+         * @brief 获取取代当前地图点的点? //?
+         * @return MapPoint* //?
+         */
+        MapPoint *GetReplaced();
 
-  /**
-   * @brief  预测尺度
-   * @note   该函数的作用是预测特征点在金字塔哪一层可以找到。
-   * @param  currentDist: 相机光心距离地图点距离
-   * @param  pKF: 关键帧
-   * @return int 预测的金字塔尺度
-   */
-  int PredictScale(const float& currentDist, KeyFrame* pKF);
-  int PredictScale(const float& currentDist, Frame* pF);
+        /**
+         * @brief 增加可视次数
+         * @note Visible表示：
+         * 1. 该MapPoint在某些帧的视野范围内，通过Frame::isInFrustum()函数判断
+         * 2. 该MapPoint被这些帧观测到，但并不一定能和这些帧的特征点匹配上
+         * 例如：有一个MapPoint（记为M），在某一帧F的视野范围内，但并不表明该点M可以和F这一帧的某个特征点能匹配上
+         * @param n: 要增加的次数
+         */
+        void IncreaseVisible(int n = 1);
 
- public:
-  long unsigned int mnId;
-  static long unsigned int nNextId;
-  long int mnFirstKFid;
-  long int mnFirstFrame;
-  // nObs用来记录被观测的次数
-  int nObs;
+        /**
+         * @brief Increase Found
+         * @detials 能找到该点的帧数+n，n默认为1
+         * @param n: 增加的个数
+         * @see Tracking::TrackLocalMap()
+         */
+        void IncreaseFound(int n = 1);
 
-  // Variables used by the tracking
-  float mTrackProjX;
-  float mTrackProjY;
-  float mTrackProjXR;
-  bool mbTrackInView;
-  int mnTrackScaleLevel;
-  float mTrackViewCos;
-  long unsigned int mnTrackReferenceForFrame;
-  long unsigned int mnLastFrameSeen;
+        //? 这个比例是?
+        float GetFoundRatio();
 
-  // Variables used by local mapping
-  long unsigned int mnBALocalForKF;
-  long unsigned int mnFuseCandidateForKF;
+        /**
+         * @brief 获取被找到的次数
+         * @return int 被找到的次数
+         */
+        inline int GetFound()
+        {
+            return mnFound;
+        }
 
-  // Variables used by loop closing
-  long unsigned int mnLoopPointForKF;
-  long unsigned int mnCorrectedByKF;
-  long unsigned int mnCorrectedReference;
-  cv::Mat mPosGBA;
-  long unsigned int mnBAGlobalForKF;
+        /**
+         * @brief 计算具有代表的描述子
+         * @detials 由于一个MapPoint会被许多相机观测到，因此在插入关键帧后，需要判断是否更新当前点的最适合的描述子 \n
+         * 先获得当前点的所有描述子，然后计算描述子之间的两两距离，最好的描述子与其他描述子应该具有最小的距离中值
+         * @see III - C3.3
+         */
+        void ComputeDistinctiveDescriptors();
 
-  static std::mutex mGlobalMutex;
+        /**
+         * @brief 获取当前地图点的描述子
+         * @return cv::Mat
+         */
+        cv::Mat GetDescriptor();
 
- protected:
-  // Position in absolute coordinates
-  cv::Mat mWorldPos;
+        /**
+         * @brief 更新平均观测方向以及观测距离范围
+         * 由于一个MapPoint会被许多相机观测到，因此在插入关键帧后，需要更新相应变量
+         * @see III - C2.2 c2.4
+         */
+        void UpdateNormalAndDepth();
 
-  // mObservations用来存放观测关系的容器，把能够观测到该MapPoint的关键帧，以及MapPoint在该关键帧中对应的索引值关联并存储起来
-  // Keyframes observing the point and associated index in keyframe
-  std::map<KeyFrame*, size_t> mObservations;
+        //?
+        float GetMinDistanceInvariance();
+        //?
+        float GetMaxDistanceInvariance();
+        //? 尺度预测?
+        int PredictScale(const float &currentDist, KeyFrame *pKF);
+        //?
+        int PredictScale(const float &currentDist, Frame *pF);
 
-  // Mean viewing direction
-  cv::Mat mNormalVector;
+    public:
+        long unsigned int mnId; ///< Global ID for MapPoint
+        static long unsigned int nNextId;
+        const long int mnFirstKFid; ///< 创建该MapPoint的关键帧ID
+        //呐,如果是从帧中创建的话,会将普通帧的id存放于这里
+        const long int mnFirstFrame; ///< 创建该MapPoint的帧ID（即每一关键帧有一个帧ID）
 
-  // Best descriptor to fast matching
-  cv::Mat mDescriptor;
+        // 被观测到的相机数目，单目+1，双目或RGB-D则+2
+        int nObs;
 
-  // Reference KeyFrame
-  KeyFrame* mpRefKF;
+        // Variables used by the tracking
+        float mTrackProjX;     ///< 当前地图点投影到某帧上后的坐标
+        float mTrackProjY;     ///< 当前地图点投影到某帧上后的坐标
+        float mTrackProjXR;    ///< 当前地图点投影到某帧上后的坐标(右目)
+        int mnTrackScaleLevel; ///< 所处的尺度, 由其他的类进行操作 //?
+        float mTrackViewCos;   ///< 被追踪到时,那帧相机看到当前地图点的视角
+        // TrackLocalMap - SearchByProjection 中决定是否对该点进行投影的变量
+        // NOTICE mbTrackInView==false的点有几种：
+        // a 已经和当前帧经过匹配（TrackReferenceKeyFrame，TrackWithMotionModel）但在优化过程中认为是外点
+        // b 已经和当前帧经过匹配且为内点，这类点也不需要再进行投影   //? 为什么已经是内点了之后就不需要再进行投影了呢?
+        // c 不在当前相机视野中的点（即未通过isInFrustum判断）     //?
+        bool mbTrackInView;
+        // TrackLocalMap - UpdateLocalPoints 中防止将MapPoints重复添加至mvpLocalMapPoints的标记
+        long unsigned int mnTrackReferenceForFrame;
 
-  // Tracking counters
-  int mnVisible;
-  int mnFound;
+        // TrackLocalMap - SearchLocalPoints 中决定是否进行isInFrustum判断的变量
+        // NOTICE mnLastFrameSeen==mCurrentFrame.mnId的点有几种：
+        // a 已经和当前帧经过匹配（TrackReferenceKeyFrame，TrackWithMotionModel）但在优化过程中认为是外点
+        // b 已经和当前帧经过匹配且为内点，这类点也不需要再进行投影
+        long unsigned int mnLastFrameSeen;
 
-  // Bad flag (we do not currently erase MapPoint from memory)
-  bool mbBad;
-  MapPoint* mpReplaced;
+        //REVIEW 下面的....都没看明白
+        // Variables used by local mapping
+        // local mapping中记录地图点对应当前局部BA的关键帧的mnId。mnBALocalForKF 在map point.h里面也有同名的变量。
+        long unsigned int mnBALocalForKF;
+        long unsigned int mnFuseCandidateForKF; ///< 在局部建图线程中使用,表示被用来进行地图点融合的关键帧(存储的是这个关键帧的id)
 
-  // Scale invariance distances
-  float mfMinDistance;
-  float mfMaxDistance;
+        // Variables used by loop closing -- 一般都是为了避免重复操作
+        /// 标记当前地图点是作为哪个"当前关键帧"的回环地图点(即回环关键帧上的地图点),在回环检测线程中被调用
+        long unsigned int mnLoopPointForKF;
+        // 如果这个地图点对应的关键帧参与到了回环检测的过程中,那么在回环检测过程中已经使用了这个关键帧修正只有的位姿来修正了这个地图点,那么这个标志位置位
+        long unsigned int mnCorrectedByKF;
+        long unsigned int mnCorrectedReference;
+        // 全局BA优化后(如果当前地图点参加了的话),这里记录优化后的位姿
+        cv::Mat mPosGBA;
+        // 如果当前点的位姿参与到了全局BA优化,那么这个变量记录了那个引起全局BA的"当前关键帧"的id
+        long unsigned int mnBAGlobalForKF;
 
-  Map* mpMap;
+        ///全局BA中对当前点进行操作的时候使用的互斥量
+        static std::mutex mGlobalMutex;
 
-  std::mutex mMutexPos;
-  std::mutex mMutexFeatures;
-};
+    protected:
+        // Position in absolute coordinates
+        cv::Mat mWorldPos; ///< MapPoint在世界坐标系下的坐标
 
-}  // namespace ORB_SLAM2
+        // Keyframes observing the point and associated index in keyframe
+        // 观测到该MapPoint的KF和该MapPoint在KF中的索引
+        std::map<KeyFrame *, size_t> mObservations;
 
-#endif  // INC_MAPPOINT_H_
+        // Mean viewing direction
+        // 该MapPoint平均观测方向
+        // 用于判断点是否在可视范围内
+        cv::Mat mNormalVector;
+
+        // Best descriptor to fast matching
+        // 每个3D点也有一个描述子，但是这个3D点可以观测多个二维特征点，从中选择一个最有代表性的
+        //通过 ComputeDistinctiveDescriptors() 得到的最有代表性描述子,距离其它描述子的平均距离最小
+        cv::Mat mDescriptor;
+
+        /// Reference KeyFrame
+        // 通常情况下MapPoint的参考关键帧就是创建该MapPoint的那个关键帧
+        KeyFrame *mpRefKF;
+
+        /// Tracking counters
+        int mnVisible;
+        int mnFound;
+
+        /// Bad flag (we do not currently erase MapPoint from memory)
+        bool mbBad;
+        //? 替换本地图点的点?
+        MapPoint *mpReplaced;
+
+        /// Scale invariance distances
+        //?
+        float mfMinDistance;
+        float mfMaxDistance;
+
+        ///所属的地图
+        Map *mpMap;
+
+        ///对当前地图点位姿进行操作的时候的互斥量
+        std::mutex mMutexPos;
+        ///对当前地图点的特征信息进行操作的时候的互斥量
+        std::mutex mMutexFeatures;
+    };
+
+} //namespace ORB_SLAM
+
+#endif // MAPPOINT_H
+
+#endif // INC_MAPPOINT_H_
