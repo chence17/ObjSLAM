@@ -1,0 +1,14 @@
+{
+	"files": [
+		{
+			"path": "inc/System.h",
+			"bookmarks": [
+				{
+					"line": 30,
+					"column": 49,
+					"label": "System类的变量命名规则"
+				}
+			]
+		}
+	]
+}
