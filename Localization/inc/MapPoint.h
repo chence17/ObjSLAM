@@ -1,7 +1,7 @@
 /*
  * @Author: Antonio Chan
  * @Date: 2021-04-06 16:56:50
- * @LastEditTime: 2021-04-12 14:19:16
+ * @LastEditTime: 2021-04-12 19:35:56
  * @LastEditors: Antonio Chan
  * @Description: Modified from ORB-SLAM2
  * @FilePath: /Localization/inc/MapPoint.h
@@ -52,7 +52,7 @@ class MapPoint {
    * 单目:
    * CreateInitialMapMonocular()
    * LocalMapping::CreateNewMapPoints()
-   * @param Pos: MapPoint的坐标（wrt世界坐标系）
+   * @param Pos: MapPoint的坐标(wrt世界坐标系)
    * @param pRefKF: KeyFrame
    * @param pMap: Map
    */
@@ -61,10 +61,10 @@ class MapPoint {
   /**
    * @brief 给定坐标与frame构造MapPoint
    * @note 被双目 UpdateLastFrame() 调用
-   * @param Pos: MapPoint的坐标（世界坐标系）
+   * @param Pos: MapPoint的坐标(世界坐标系)
    * @param pMap: Map
    * @param pFrame: Frame
-   * @param idxF: MapPoint在Frame中的索引，即对应的特征点的编号
+   * @param idxF: MapPoint在Frame中的索引, 即对应的特征点的编号
    */
   MapPoint(const cv::Mat &Pos, Map *pMap, Frame *pFrame, const int &idxF);
 
@@ -115,7 +115,7 @@ class MapPoint {
   /**
    * @brief 添加观测
    * @note 记录哪些KeyFrame的那个特征点能观测到该MapPoint,
-   * 同时增加观测的相机数目nObs, 单目+1，双目或者grbd+2,
+   * 同时增加观测的相机数目nObs, 单目+1, 双目或者grbd+2,
    * 这个函数是建立关键帧共视关系的核心函数,
    * 能共同观测到某些MapPoints的关键帧是共视关键帧.
    * @param pKF: 观测到当前地图点的关键帧
@@ -125,7 +125,7 @@ class MapPoint {
 
   /**
    * @brief 取消某个关键帧对当前地图点的观测
-   * @note 如果某个关键帧要被删除，那么会发生这个操作
+   * @note 如果某个关键帧要被删除, 那么会发生这个操作
    * @param pKF: 观测到当前地图点的关键帧 #NOTE: 不一定正确
    */
   void EraseObservation(KeyFrame *pKF);
@@ -147,7 +147,7 @@ class MapPoint {
   bool IsInKeyFrame(KeyFrame *pKF);
 
   /**
-   * @brief 告知可以观测到该MapPoint的Frame，该MapPoint已被删除
+   * @brief 告知可以观测到该MapPoint的Frame, 该MapPoint已被删除
    * @note note
    * @return None
    */
@@ -161,7 +161,7 @@ class MapPoint {
   bool isBad();
 
   /**
-   * @brief 在形成闭环的时候，会更新 KeyFrame 与 MapPoint
+   * @brief 在形成闭环的时候, 会更新 KeyFrame 与 MapPoint
    * #NOTE: 之间的关系其实也就是相互替换?
    * @note note
    * @param pMP: 地图点
@@ -179,16 +179,17 @@ class MapPoint {
   /**
    * @brief 增加可视次数
    * @note Visible表示：
-   * 1. 该MapPoint在某些帧的视野范围内，通过Frame::isInFrustum()函数判断
-   * 2. 该MapPoint被这些帧观测到，但并不一定能和这些帧的特征点匹配上
-   * 例如：有一个MapPoint（记为M），在某一帧F的视野范围内，但并不表明该点M可以和F这一帧的某个特征点能匹配上
+   * 1. 该MapPoint在某些帧的视野范围内, 通过Frame::isInFrustum()函数判断
+   * 2. 该MapPoint被这些帧观测到, 但并不一定能和这些帧的特征点匹配上
+   * 例如：有一个MapPoint(记为M), 在某一帧F的视野范围内,
+   * 但并不表明该点M可以和F这一帧的某个特征点能匹配上
    * @param n: 要增加的次数
    * @return None
    */
   void IncreaseVisible(int n = 1);
 
   /**
-   * @brief 能找到该点的帧数+n，n默认为1
+   * @brief 能找到该点的帧数+n, n默认为1
    * @param n: 增加的个数
    * #NOTE: 看Tracking::TrackLocalMap()
    */
@@ -210,9 +211,9 @@ class MapPoint {
 
   /**
    * @brief 计算具有代表的描述子
-   * @note 由于一个MapPoint会被许多相机观测到，
-   * 因此在插入关键帧后，需要判断是否更新当前点的最适合的描述子
-   * 先获得当前点的所有描述子，然后计算描述子之间的两两距离，
+   * @note 由于一个MapPoint会被许多相机观测到,
+   * 因此在插入关键帧后, 需要判断是否更新当前点的最适合的描述子
+   * 先获得当前点的所有描述子, 然后计算描述子之间的两两距离,
    * 最好的描述子与其他描述子应该具有最小的距离中值
    * @return None
    */
@@ -227,8 +228,8 @@ class MapPoint {
 
   /**
    * @brief 更新平均观测方向以及观测距离范围
-   * @note 由于一个MapPoint会被许多相机观测到，
-   * 因此在插入关键帧后，需要更新相应变量
+   * @note 由于一个MapPoint会被许多相机观测到,
+   * 因此在插入关键帧后, 需要更新相应变量
    * @return None
    */
   void UpdateNormalAndDepth();
@@ -271,11 +272,11 @@ class MapPoint {
   // (const long int) 创建该MapPoint的关键帧ID
   const long int mnFirstKFid;
 
-  // (const long int) 创建该MapPoint的帧ID（即每一关键帧有一个帧ID）
+  // (const long int) 创建该MapPoint的帧ID(即每一关键帧有一个帧ID)
   // 如果是从帧中创建的话,会将普通帧的id存放于这里
   const long int mnFirstFrame;
 
-  // (int) 被观测到的相机数目，单目+1，双目或RGBD则+2
+  // (int) 被观测到的相机数目, 单目+1, 双目或RGBD则+2
   int nObs;
 
   /**==============================================
@@ -302,12 +303,12 @@ class MapPoint {
 
   // (bool) 是否在追踪线程视野内 #TODO: 不确定
   // 注意, mbTrackInView==false的点有几种：
-  // a. 已经和当前帧经过匹配（TrackReferenceKeyFrame，
-  //    TrackWithMotionModel）但在优化过程中认为是外点
-  // b. 已经和当前帧经过匹配且为内点，
+  // a. 已经和当前帧经过匹配(TrackReferenceKeyFrame,
+  //    TrackWithMotionModel)但在优化过程中认为是外点
+  // b. 已经和当前帧经过匹配且为内点,
   //    这类点也不需要再进行投影
   //    #TODO:为什么已经是内点了之后就不需要再进行投影了呢?
-  // c. 不在当前相机视野中的点（即未通过isInFrustum判断）
+  // c. 不在当前相机视野中的点(即未通过isInFrustum判断)
   bool mbTrackInView;
 
   // (long unsigned int) #TODO
@@ -318,9 +319,9 @@ class MapPoint {
   // (long unsigned int) #TODO
   // TrackLocalMap - SearchLocalPoints 中决定是否进行isInFrustum判断的变量
   // NOTICE mnLastFrameSeen==mCurrentFrame.mnId的点有几种：
-  // a. 已经和当前帧经过匹配（TrackReferenceKeyFrame，TrackWithMotionModel）
+  // a. 已经和当前帧经过匹配(TrackReferenceKeyFrame, TrackWithMotionModel)
   //    但在优化过程中认为是外点
-  // b. 已经和当前帧经过匹配且为内点，这类点也不需要再进行投影
+  // b. 已经和当前帧经过匹配且为内点, 这类点也不需要再进行投影
   long unsigned int mnLastFrameSeen;
 
   // TODO: 下面的....都没看明白
@@ -332,8 +333,8 @@ class MapPoint {
    *=============================================**/
 
   // (long unsigned int) #TODO
-  // local mapping中记录地图点对应当前局部BA的关键帧的mnId。mnBALocalForKF 在map
-  // point.h里面也有同名的变量。
+  // local mapping中记录地图点对应当前局部BA的关键帧的mnId.mnBALocalForKF 在map
+  // point.h里面也有同名的变量.
   long unsigned int mnBALocalForKF;
 
   // (long unsigned int) #TODO
@@ -387,8 +388,8 @@ class MapPoint {
 
   // (cv::Mat) #TODO
   // Best descriptor to fast matching
-  // 每个3D点也有一个描述子，但是这个3D点可以观测多个二维特征点，从中选择一个最有代表性的
-  // 通过 ComputeDistinctiveDescriptors()
+  // 每个3D点也有一个描述子, 但是这个3D点可以观测多个二维特征点,
+  // 从中选择一个最有代表性的 通过 ComputeDistinctiveDescriptors()
   // 得到的最有代表性描述子,距离其它描述子的平均距离最小
   cv::Mat mDescriptor;
 

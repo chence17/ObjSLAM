@@ -1,7 +1,7 @@
-/**
+/*
  * @Author: Antonio Chan
  * @Date: 2021-04-06 16:56:50
- * @LastEditTime: 2021-04-06 18:54:52
+ * @LastEditTime: 2021-04-12 19:36:14
  * @LastEditors: Antonio Chan
  * @Description: Modified from ORB-SLAM2,
  * 这个头文件定义了ORB-SLAM2主线程(系统)的结构,
@@ -176,7 +176,7 @@ class System {
    * @brief 相机轨迹保存函数( TUM 格式) #NOTE: 仅支持双目和 RGBD 相机,
    * 不支持单目相机.
    * @note 以 TUM
-   * 格式保存相机的运动轨迹，这个函数将会在系统关闭函数函数中被首先调用, TUM
+   * 格式保存相机的运动轨迹, 这个函数将会在系统关闭函数函数中被首先调用, TUM
    * 格式相关细节请参考 http://vision.in.tum.de/data/datasets/rgbd-dataset.
    * @param filename: 相机轨迹保存文件名
    * @return None
@@ -186,10 +186,10 @@ class System {
   /**
    * @brief 关键帧轨迹保存函数( TUM 格式) #NOTE: 支持所有相机.
    * @note 以 TUM
-   * 格式保存关键帧轨迹，这个函数将会在系统关闭函数函数中被首先调用, TUM
+   * 格式保存关键帧轨迹, 这个函数将会在系统关闭函数函数中被首先调用, TUM
    * 格式相关细节请参考 http://vision.in.tum.de/data/datasets/rgbd-dataset.
    * #TODO
-   * 是不是这也意味着，我可以使用g2o_viewer这样的软件去查看并且进行优化实验？
+   * 是不是这也意味着, 我可以使用g2o_viewer这样的软件去查看并且进行优化实验？
    * @param filename: 关键帧轨迹保存文件名
    * @return None
    */
@@ -199,7 +199,7 @@ class System {
    * @brief 相机轨迹保存函数( KITTI 格式) #NOTE: 仅支持双目和 RGBD 相机,
    * 不支持单目相机.
    * @note 以 KITTI
-   * 格式保存相机的运动轨迹，这个函数将会在系统关闭函数函数中被首先调用, KITTI
+   * 格式保存相机的运动轨迹, 这个函数将会在系统关闭函数函数中被首先调用, KITTI
    * 格式相关细节请参考 http://www.cvlibs.net/datasets/kitti/eval_odometry.php.
    * @param filename: 相机轨迹保存文件名
    * @return None
@@ -228,7 +228,7 @@ class System {
 
   // Information from most recent processed frame
   // You can call this right after TrackMonocular (or stereo or RGBD)
-  //获取最近的运动追踪状态、地图点追踪状态、特征点追踪状态（）
+  //获取最近的运动追踪状态、地图点追踪状态、特征点追踪状态()
   /**
    * @brief 获取追踪模块当前状态.
    * @note 可以在相机追踪函数运行结束后使用.
@@ -307,7 +307,8 @@ class System {
   // System threads: Local Mapping, Loop Closing, Viewer.
   // The Tracking thread "lives" in the main execution thread that creates the
   // System object.
-  //系统除了在主进程中进行运动追踪工作外，会创建局部建图线程、回环检测线程和查看器线程。
+  //系统除了在主进程中进行运动追踪工作外,
+  //会创建局部建图线程、回环检测线程和查看器线程.
 
   /**==============================================
    * *             System 各线程运行关系
@@ -362,7 +363,7 @@ class System {
   bool mbDeactivateLocalizationMode;
 
   // Tracking state
-  // 追踪状态标志，注意前三个的类型和上面的函数类型相互对应
+  // 追踪状态标志, 注意前三个的类型和上面的函数类型相互对应
   // (int) System 追踪模块的状态变量, 详见 Tracking::eTrackingState.
   int mTrackingState;
 
