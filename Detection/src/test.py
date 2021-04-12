@@ -171,6 +171,8 @@ if __name__ == '__main__':
                     frame_object['width'] = i.w
                     frame_object['height'] = i.h
                     frame_object['theta'] = i.ry
+                    box3d_pts_2d, _ = kitti_data_utils.compute_box_3d(i, calib.P)
+                    frame_object['box3d_pts_2d'] = box3d_pts_2d
                     frame_object_list.append(frame_object)
                 with open(os.path.join(configs.frame_dir, '%06d.json'%batch_idx),"w") as f:
                     json.dump(frame_object_list, fp=f, cls=NumpyEncoder, indent=4)
