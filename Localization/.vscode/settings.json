@@ -83,5 +83,6 @@
         "LastEditors": "Antonio Chan",
         "Description": "Modified from ORB-SLAM2",
         "FilePath": "Do not edit"
-    }
+    },
+    "C_Cpp.clang_format_fallbackStyle": "Google"
 }
