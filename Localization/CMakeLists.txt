@@ -48,9 +48,6 @@ find_package(nlohmann_json 3.9.1 REQUIRED)
 include_directories(
 ${PROJECT_SOURCE_DIR}
 ${PROJECT_SOURCE_DIR}/inc
-${PROJECT_SOURCE_DIR}/third_party/Pangolin/install/include
-${PROJECT_SOURCE_DIR}/third_party/opencv/install/include
-${PROJECT_SOURCE_DIR}/third_party/nlohmann_json/install/include
 ${EIGEN3_INCLUDE_DIR}
 ${Pangolin_INCLUDE_DIRS}
 )

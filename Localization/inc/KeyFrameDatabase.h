@@ -1,118 +1,74 @@
-/*
- * @Author: Antonio Chan
- * @Date: 2021-04-06 16:56:50
- * @LastEditTime: 2021-04-14 14:49:36
- * @LastEditors: Antonio Chan
- * @Description: Modified from ORB-SLAM2
- * @FilePath: /Localization/inc/KeyFrameDatabase.h
- */
+/**
+* This file is part of ORB-SLAM2.
+*
+* Copyright (C) 2014-2016 Raúl Mur-Artal <raulmur at unizar dot es> (University of Zaragoza)
+* For more information see <https://github.com/raulmur/ORB_SLAM2>
+*
+* ORB-SLAM2 is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* ORB-SLAM2 is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with ORB-SLAM2. If not, see <http://www.gnu.org/licenses/>.
+*/
 
-#ifndef INC_KEYFRAMEDATABASE_H_
-#define INC_KEYFRAMEDATABASE_H_
+#ifndef KEYFRAMEDATABASE_H
+#define KEYFRAMEDATABASE_H
 
-// 公用库.
-#include <list>
-#include <mutex>
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui/highgui.hpp>
-#include <set>
 #include <vector>
+#include <list>
+#include <set>
 
-#include "third_party/DBoW2/DBoW2/BowVector.h"
-
-// ORB-SLAM2中的其他模块.
-#include "Frame.h"
 #include "KeyFrame.h"
+#include "Frame.h"
 #include "ORBVocabulary.h"
-#include "Tracking.h"
 
-/**==============================================
- * *                   变量命名规则
- *   类的公有成员变量(public)的名称带有前缀m.
- *   类的私有成员变量(private)的名称前缀为空.
- *   枚举变量(enum)的名称带有前缀e.
- *   指针变量(pointer)的名称带有前缀p.
- *   线程变量(thread)的名称带有前缀t.
- *
- *   前缀先后顺序: m>p>t
- *
- *=============================================**/
+#include<mutex>
 
-namespace ORB_SLAM2 {
-// 需要使用到的其他模块的前置声明.
+
+namespace ORB_SLAM2
+{
+
 class KeyFrame;
 class Frame;
 
-// 关键帧数据库数据类型.
-class KeyFrameDatabase {
- public:
-  /**
-   * @brief 构造函数
-   * @note
-   * @param voc: 词袋模型的字典
-   */
-  KeyFrameDatabase(const ORBVocabulary &voc);
 
-  /**
-   * @brief 根据关键帧的词包, 更新数据库的倒排索引
-   * @note
-   * @param pKF: 关键帧
-   * @return None
-   */
-  void add(KeyFrame *pKF);
+class KeyFrameDatabase
+{
+public:
 
-  /**
-   * @brief 删除关键帧
-   * @note 关键帧被删除后, 更新数据库的倒排索引
-   * @param pKF: 关键帧
-   * @return None
-   */
-  void erase(KeyFrame *pKF);
+    KeyFrameDatabase(const ORBVocabulary &voc);
 
-  /**
-   * @brief 清空关键帧数据库
-   * @note
-   * @return None
-   */
-  void clear();
+   void add(KeyFrame* pKF);
 
-  /**
-   * @brief 在闭环检测中找到与该关键帧可能闭环的关键帧
-   * @note
-   * @param pKF: 需要闭环的关键帧
-   * @param minScore: 相似性分数最低要求
-   * @return (std::vector<KeyFrame *>) 可能闭环的关键帧
-   */
-  std::vector<KeyFrame *> DetectLoopCandidates(KeyFrame *pKF, float minScore);
+   void erase(KeyFrame* pKF);
 
-  /**
-   * @brief Relocalization
-   * @note 在重定位中找到与该帧相似的关键帧
-   * 1. 找出和当前帧具有公共单词的所有关键帧
-   * 2. 只和具有共同单词较多的关键帧进行相似度计算
-   * 3. 将与关键帧相连(权值最高)的前十个关键帧归为一组, 计算累计得分
-   * 4. 只返回累计得分较高的组中分数最高的关键帧
-   * @param F: 需要重定位的帧
-   * @return 相似的关键帧
-   */
-  std::vector<KeyFrame *> DetectRelocalizationCandidates(Frame *F);
+   void clear();
 
- protected:
-  // (const ORBVocabulary *) #TODO
+   // Loop Detection
+   std::vector<KeyFrame *> DetectLoopCandidates(KeyFrame* pKF, float minScore);
+
+   // Relocalization
+   std::vector<KeyFrame*> DetectRelocalizationCandidates(Frame* F);
+
+protected:
+
   // Associated vocabulary
-  // 预先训练好的词典
-  const ORBVocabulary *mpVoc;
+  const ORBVocabulary* mpVoc;
 
-  // (std::vector<list<KeyFrame *>>) #TODO
   // Inverted file
-  // 倒排索引, mvInvertedFile[i]表示包含了第i个word id的所有关键帧
-  std::vector<list<KeyFrame *>> mvInvertedFile;
+  std::vector<list<KeyFrame*> > mvInvertedFile;
 
-  // (std::mutex) #TODO
-  // Mutex, 多用途的
+  // Mutex
   std::mutex mMutex;
 };
 
-}  // namespace ORB_SLAM2
+} //namespace ORB_SLAM
 
-#endif  // INC_KEYFRAMEDATABASE_H_
+#endif
