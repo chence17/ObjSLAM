@@ -1,7 +1,7 @@
 /*
  * @Author: Antonio Chan
  * @Date: 2021-04-07 22:00:25
- * @LastEditTime: 2021-04-13 11:20:34
+ * @LastEditTime: 2021-04-14 13:16:08
  * @LastEditors: Antonio Chan
  * @Description: Modified from ORB-SLAM2,
  * 提供了一系列的常见转换.
@@ -46,6 +46,15 @@ class Converter {
    * @return (std::vector<cv::Mat>) 转换结果
    */
   static std::vector<cv::Mat> toDescriptorVector(const cv::Mat &Descriptors);
+
+  /**
+   * @brief 将以cv::Mat格式存储的位姿转换成为g2o::SE3Quat类型
+   * @note v换成为g2o::SE3Quat类型
+   * 将不同格式存储的位姿统一转换成为g2o::SE3Quat格式存储
+   * @param cvT: #TODO
+   * @return (g2o::SE3Quat) #TODO
+   */
+  static g2o::SE3Quat toSE3Quat(const cv::Mat &cvT);
 
   /**
    * @brief 将以cv::Mat格式存储的位姿转换成为g2o::SE3Quat类型

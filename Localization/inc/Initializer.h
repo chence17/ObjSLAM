@@ -1,7 +1,7 @@
 /*
  * @Author: Antonio Chan
  * @Date: 2021-04-06 16:56:50
- * @LastEditTime: 2021-04-12 22:27:13
+ * @LastEditTime: 2021-04-14 14:50:45
  * @LastEditors: Antonio Chan
  * @Description: Modified from ORB-SLAM2, 单目初始化部分的声明. 双目
  * 和RGBD输入的情况下,不会使用这个类
@@ -13,9 +13,14 @@
 
 // 公用库.
 #include <opencv2/opencv.hpp>
+#include <thread>
+
+#include "third_party/DBoW2/DUtils/Random.h"
 
 // ORB-SLAM2中的其他模块.
 #include "Frame.h"
+#include "ORBmatcher.h"
+#include "Optimizer.h"  //不太明白为什么这个头文件的包含在vscode中会报错
 
 /**==============================================
  * *                   变量命名规则

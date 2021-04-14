@@ -1,7 +1,7 @@
 /*
  * @Author: Antonio Chan
  * @Date: 2021-04-06 16:56:50
- * @LastEditTime: 2021-04-12 22:20:48
+ * @LastEditTime: 2021-04-14 14:49:36
  * @LastEditors: Antonio Chan
  * @Description: Modified from ORB-SLAM2
  * @FilePath: /Localization/inc/KeyFrameDatabase.h
@@ -13,13 +13,18 @@
 // 公用库.
 #include <list>
 #include <mutex>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 #include <set>
 #include <vector>
+
+#include "third_party/DBoW2/DBoW2/BowVector.h"
 
 // ORB-SLAM2中的其他模块.
 #include "Frame.h"
 #include "KeyFrame.h"
 #include "ORBVocabulary.h"
+#include "Tracking.h"
 
 /**==============================================
  * *                   变量命名规则

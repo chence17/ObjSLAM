@@ -1,7 +1,7 @@
 /*
  * @Author: Antonio Chan
  * @Date: 2021-04-06 16:56:50
- * @LastEditTime: 2021-04-12 22:37:43
+ * @LastEditTime: 2021-04-14 14:41:32
  * @LastEditors: Antonio Chan
  * @Description: Modified from ORB-SLAM2
  * @FilePath: /Localization/inc/Tracking.h
@@ -11,11 +11,14 @@
 #define INC_TRACKING_H_
 
 // 公用库.
+#include <cmath>
+#include <iostream>
 #include <mutex>
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
 
 // ORB-SLAM2中的其他模块.
+#include "Converter.h"
 #include "Frame.h"
 #include "FrameDrawer.h"
 #include "Initializer.h"
@@ -26,6 +29,9 @@
 #include "MapDrawer.h"
 #include "ORBVocabulary.h"
 #include "ORBextractor.h"
+#include "ORBmatcher.h"
+#include "Optimizer.h"
+#include "PnPsolver.h"
 #include "System.h"
 #include "Viewer.h"
 

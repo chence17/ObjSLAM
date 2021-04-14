@@ -1,7 +1,7 @@
 /*
  * @Author: Antonio Chan
  * @Date: 2021-04-07 22:00:25
- * @LastEditTime: 2021-04-13 11:56:52
+ * @LastEditTime: 2021-04-14 14:46:22
  * @LastEditors: Antonio Chan
  * @Description: Modified from ORB-SLAM2
  * 这个文件主要负责进行ORB特征点的提取和数目分配功能
@@ -14,7 +14,13 @@
 // 公用库.
 #include <opencv/cv.h>
 
+#include <iostream>
+#include <iterator>
 #include <list>
+#include <opencv2/core/core.hpp>
+#include <opencv2/features2d/features2d.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <vector>
 
 /**==============================================

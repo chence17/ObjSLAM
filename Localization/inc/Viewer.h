@@ -11,6 +11,8 @@
 #define INC_VIEWER_H_
 
 // 公用库.
+#include <pangolin/pangolin.h>
+
 #include <mutex>
 
 // ORB-SLAM2中的其他模块.

@@ -1,7 +1,7 @@
 /*
  * @Author: Antonio Chan
  * @Date: 2021-04-07 22:00:25
- * @LastEditTime: 2021-04-13 11:51:38
+ * @LastEditTime: 2021-04-14 14:45:56
  * @LastEditors: Antonio Chan
  * @Description: Modified from ORB-SLAM2
  * @FilePath: /Localization/inc/ORBmatcher.h
@@ -11,9 +11,14 @@
 #define INC_ORBMATCHER_H_
 
 // 公用库.
+#include <limits.h>
+#include <stdint.h>
+
 #include <opencv2/core/core.hpp>
 #include <opencv2/features2d/features2d.hpp>
 #include <vector>
+
+#include "third_party/DBoW2/DBoW2/FeatureVector.h"
 
 // ORB-SLAM2中的其他模块.
 #include "Frame.h"

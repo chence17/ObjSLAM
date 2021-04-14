@@ -1,7 +1,7 @@
 /*
  * @Author: Antonio Chan
  * @Date: 2021-04-06 16:56:50
- * @LastEditTime: 2021-04-12 22:23:06
+ * @LastEditTime: 2021-04-14 14:48:33
  * @LastEditors: Antonio Chan
  * @Description: Modified from ORB-SLAM2
  * @FilePath: /Localization/inc/Map.h

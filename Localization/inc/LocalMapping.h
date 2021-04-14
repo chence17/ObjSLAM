@@ -1,7 +1,7 @@
 /*
  * @Author: Antonio Chan
  * @Date: 2021-04-06 16:56:50
- * @LastEditTime: 2021-04-12 22:44:18
+ * @LastEditTime: 2021-04-14 14:49:12
  * @LastEditors: Antonio Chan
  * @Description: Modified from ORB-SLAM2
  * @FilePath: /Localization/inc/LocalMapping.h
@@ -20,6 +20,8 @@
 #include "KeyFrameDatabase.h"
 #include "LoopClosing.h"
 #include "Map.h"
+#include "ORBmatcher.h"
+#include "Optimizer.h"
 #include "Tracking.h"
 
 /**==============================================

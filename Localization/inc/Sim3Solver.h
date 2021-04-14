@@ -1,7 +1,7 @@
 /*
  * @Author: Antonio Chan
  * @Date: 2021-04-07 22:00:25
- * @LastEditTime: 2021-04-13 11:36:10
+ * @LastEditTime: 2021-04-14 14:45:01
  * @LastEditors: Antonio Chan
  * @Description: Modified from ORB-SLAM2
  * @FilePath: /Localization/inc/Sim3Solver.h
@@ -11,11 +11,16 @@
 #define INC_SIM3SOLVER_H_
 
 // 公用库.
+#include <cmath>
+#include <opencv2/core/core.hpp>
 #include <opencv2/opencv.hpp>
 #include <vector>
 
+#include "third_party/DBoW2/DUtils/Random.h"
+
 // ORB-SLAM2中的其他模块.
 #include "KeyFrame.h"
+#include "ORBmatcher.h"
 
 /**==============================================
  * *                   变量命名规则

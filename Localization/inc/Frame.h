@@ -1,7 +1,7 @@
 /*
  * @Author: Antonio Chan
  * @Date: 2021-04-06 16:56:50
- * @LastEditTime: 2021-04-12 21:59:20
+ * @LastEditTime: 2021-04-14 12:33:42
  * @LastEditors: Antonio Chan
  * @Description: Modified from ORB-SLAM2
  * @FilePath: /Localization/inc/Frame.h
@@ -12,16 +12,19 @@
 
 // 公用库.
 #include <opencv2/opencv.hpp>
+#include <thread>
 #include <vector>
 
 #include "third_party/DBoW2/DBoW2/BowVector.h"
 #include "third_party/DBoW2/DBoW2/FeatureVector.h"
 
 // ORB-SLAM2中的其他模块.
+#include "Converter.h"
 #include "KeyFrame.h"
 #include "MapPoint.h"
 #include "ORBVocabulary.h"
 #include "ORBextractor.h"
+#include "ORBmatcher.h"
 
 /**==============================================
  * *                   变量命名规则

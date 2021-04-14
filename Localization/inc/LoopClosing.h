@@ -1,7 +1,7 @@
 /*
  * @Author: Antonio Chan
  * @Date: 2021-04-06 16:56:50
- * @LastEditTime: 2021-04-12 22:48:54
+ * @LastEditTime: 2021-04-14 14:48:52
  * @LastEditors: Antonio Chan
  * @Description: Modified from ORB-SLAM2
  * @FilePath: /Localization/inc/LoopClosing.h
@@ -19,11 +19,15 @@
 #include "third_party/g2o/g2o/types/types_seven_dof_expmap.h"
 
 // ORB-SLAM2中的其他模块.
+#include "Converter.h"
 #include "KeyFrame.h"
 #include "KeyFrameDatabase.h"
 #include "LocalMapping.h"
 #include "Map.h"
 #include "ORBVocabulary.h"
+#include "ORBmatcher.h"
+#include "Optimizer.h"
+#include "Sim3Solver.h"
 #include "Tracking.h"
 
 /**==============================================

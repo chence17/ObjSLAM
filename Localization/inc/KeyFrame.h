@@ -1,7 +1,7 @@
 /*
  * @Author: Antonio Chan
  * @Date: 2021-04-06 16:56:50
- * @LastEditTime: 2021-04-12 22:19:19
+ * @LastEditTime: 2021-04-14 14:50:01
  * @LastEditors: Antonio Chan
  * @Description: Modified from ORB-SLAM2
  * @FilePath: /Localization/inc/KeyFrame.h
@@ -19,11 +19,13 @@
 #include "third_party/DBoW2/DBoW2/FeatureVector.h"
 
 // ORB-SLAM2中的其他模块.
+#include "Converter.h"
 #include "Frame.h"
 #include "KeyFrameDatabase.h"
 #include "MapPoint.h"
 #include "ORBVocabulary.h"
 #include "ORBextractor.h"
+#include "ORBmatcher.h"
 
 /**==============================================
  * *                   变量命名规则

@@ -13,11 +13,17 @@
 #define INC_SYSTEM_H_
 
 // 公用库.
+#include <pangolin/pangolin.h>  //可视化界面
+#include <unistd.h>
+
+#include <iomanip>  //主要是对cin,cout之类的一些操纵运算子
 #include <opencv2/core/core.hpp>
 #include <string>
 #include <thread>
+#include <thread>  //多线程
 
 // ORB-SLAM2中的其他模块.
+#include "Converter.h"  // TODO 目前还不是很明白这个是做什么的
 #include "FrameDrawer.h"
 #include "KeyFrameDatabase.h"
 #include "LocalMapping.h"

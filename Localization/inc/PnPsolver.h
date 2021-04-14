@@ -1,7 +1,7 @@
 /*
  * @Author: Antonio Chan
  * @Date: 2021-04-07 22:00:25
- * @LastEditTime: 2021-04-13 11:48:47
+ * @LastEditTime: 2021-04-14 14:45:31
  * @LastEditors: Antonio Chan
  * @Description: Modified from ORB-SLAM2
  * @FilePath: /Localization/inc/PnPsolver.h
@@ -11,7 +11,13 @@
 #define INC_PNPSOLVER_H_
 
 // 公用库.
+#include <algorithm>
+#include <cmath>
+#include <iostream>
 #include <opencv2/core/core.hpp>
+#include <vector>
+
+#include "third_party/DBoW2/DUtils/Random.h"
 
 // ORB-SLAM2中的其他模块.
 #include "Frame.h"

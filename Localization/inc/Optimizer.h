@@ -1,7 +1,7 @@
 /*
  * @Author: Antonio Chan
  * @Date: 2021-04-06 16:56:50
- * @LastEditTime: 2021-04-12 20:57:54
+ * @LastEditTime: 2021-04-14 14:46:53
  * @LastEditors: Antonio Chan
  * @Description: Modified from ORB-SLAM2
  * @FilePath: /Localization/inc/Optimizer.h
@@ -11,13 +11,21 @@
 #define INC_OPTIMIZER_H_
 
 // 公用库.
+#include <Eigen/StdVector>
 #include <map>
 #include <mutex>
 #include <vector>
 
+#include "third_party/g2o/g2o/core/block_solver.h"
+#include "third_party/g2o/g2o/core/optimization_algorithm_levenberg.h"
+#include "third_party/g2o/g2o/core/robust_kernel_impl.h"
+#include "third_party/g2o/g2o/solvers/linear_solver_dense.h"
+#include "third_party/g2o/g2o/solvers/linear_solver_eigen.h"
 #include "third_party/g2o/g2o/types/types_seven_dof_expmap.h"
+#include "third_party/g2o/g2o/types/types_six_dof_expmap.h"
 
 // ORB-SLAM2中的其他模块.
+#include "Converter.h"
 #include "Frame.h"
 #include "KeyFrame.h"
 #include "LoopClosing.h"
