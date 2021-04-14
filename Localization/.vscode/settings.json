@@ -69,7 +69,10 @@
         "typeinfo": "cpp",
         "valarray": "cpp",
         "variant": "cpp",
-        "typeindex": "cpp"
+        "typeindex": "cpp",
+        "*.ipp": "cpp",
+        "strstream": "cpp",
+        "cfenv": "cpp"
     },
     "cSpell.words": [
         "Adjustemnt",

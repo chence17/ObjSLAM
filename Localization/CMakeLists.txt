@@ -45,11 +45,17 @@ find_package(Pangolin REQUIRED)
 set(nlohmann_json_DIR ${PROJECT_SOURCE_DIR}/third_party/nlohmann_json/install/lib/cmake/nlohmann_json)
 find_package(nlohmann_json 3.9.1 REQUIRED)
 
+find_package(Boost REQUIRED  system)
+if(NOT Boost_FOUND)
+    message("Not found Boost")
+endif()
+
 include_directories(
 ${PROJECT_SOURCE_DIR}
 ${PROJECT_SOURCE_DIR}/inc
 ${EIGEN3_INCLUDE_DIR}
 ${Pangolin_INCLUDE_DIRS}
+${Boost_INCLUDE_DIRS}
 )
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
@@ -74,14 +80,17 @@ src/KeyFrameDatabase.cc
 src/Sim3Solver.cc
 src/Initializer.cc
 src/Viewer.cc
+src/Socket.cc
 )
 
 target_link_libraries(${PROJECT_NAME}
 ${OpenCV_LIBS}
 ${EIGEN3_LIBS}
 ${Pangolin_LIBRARIES}
+${Boost_LIBRARIES}
 ${PROJECT_SOURCE_DIR}/third_party/DBoW2/lib/libDBoW2.so
 ${PROJECT_SOURCE_DIR}/third_party/g2o/lib/libg2o.so
+nlohmann_json::nlohmann_json
 )
 
 # Build examples
