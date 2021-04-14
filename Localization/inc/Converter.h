@@ -1,10 +1,10 @@
 /*
  * @Author: Antonio Chan
  * @Date: 2021-04-14 13:14:04
- * @LastEditTime: 2021-04-14 13:17:07
+ * @LastEditTime: 2021-04-14 15:42:41
  * @LastEditors: Antonio Chan
  * @Description: Description
- * @FilePath: /ORB_SLAM2/include/Converter.h
+ * @FilePath: /Localization/inc/Converter.h
  */
 /**
  * This file is part of ORB-SLAM2.
@@ -32,8 +32,8 @@
 #include <Eigen/Dense>
 #include <opencv2/core/core.hpp>
 
-#include "Thirdparty/g2o/g2o/types/types_seven_dof_expmap.h"
-#include "Thirdparty/g2o/g2o/types/types_six_dof_expmap.h"
+#include "third_party/g2o/g2o/types/types_seven_dof_expmap.h"
+#include "third_party/g2o/g2o/types/types_six_dof_expmap.h"
 
 namespace ORB_SLAM2 {
 
