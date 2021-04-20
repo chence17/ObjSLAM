@@ -47,7 +47,7 @@ Frame::Frame(const Frame &frame)
      mpReferenceKF(frame.mpReferenceKF), mnScaleLevels(frame.mnScaleLevels),
      mfScaleFactor(frame.mfScaleFactor), mfLogScaleFactor(frame.mfLogScaleFactor),
      mvScaleFactors(frame.mvScaleFactors), mvInvScaleFactors(frame.mvInvScaleFactors),
-     mvLevelSigma2(frame.mvLevelSigma2), mvInvLevelSigma2(frame.mvInvLevelSigma2)
+     mvLevelSigma2(frame.mvLevelSigma2), mvInvLevelSigma2(frame.mvInvLevelSigma2), mvKeyObjList(frame.mvKeyObjList) // NOTE: ObjSLAM
 {
     for(int i=0;i<FRAME_GRID_COLS;i++)
         for(int j=0; j<FRAME_GRID_ROWS; j++)
@@ -58,7 +58,7 @@ Frame::Frame(const Frame &frame)
 }
 
 
-Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, ORBextractor* extractorLeft, ORBextractor* extractorRight, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth)
+Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, ORBextractor* extractorLeft, ORBextractor* extractorRight, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth, nlohmann::json &kol)
     :mpORBvocabulary(voc),mpORBextractorLeft(extractorLeft),mpORBextractorRight(extractorRight), mTimeStamp(timeStamp), mK(K.clone()),mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth),
      mpReferenceKF(static_cast<KeyFrame*>(NULL))
 {
@@ -114,6 +114,41 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
     mb = mbf/fx;
 
     AssignFeaturesToGrid();
+
+    // NOTE: ObjSLAM
+    for (auto& element : kol) {
+        if(element["type"].get<string>()=="Car"){
+            auto length = element["width"].get<float>();
+            auto width = element["height"].get<float>();
+            auto height = element["length"].get<float>();
+            auto theta = element["theta"].get<float>();
+            auto pi = static_cast<float>(M_PI);
+            if(theta<pi && theta>-pi/2){
+                theta = -theta + pi/2;
+            } else if(theta<-pi/2 && theta>-pi){
+                theta = -theta - pi - pi/2;
+            } else if(theta==pi || theta==-pi){
+                theta = -pi/2;
+            } else if(theta==-pi/2){
+                theta = pi;
+            }
+            CenterPoints center;
+            if(!element["center"].empty()){
+                center = element["center"].get<CenterPoints>();
+            } else {
+                center = {0.0, 0.0, 0.0};
+            }
+            Box2DPoints box2D;
+            if(!element["box3d_pts_2d"].empty()){
+                box2D = element["box3d_pts_2d"].get<Box2DPoints>();
+            } else {
+                for(auto& pt : box2D) {
+                    pt = {0.0, 0.0};
+                }
+            }
+            mvKeyObjList.emplace_back(center, length, width, height, theta, box2D);
+        }
+    }
 }
 
 Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeStamp, ORBextractor* extractor,ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth)

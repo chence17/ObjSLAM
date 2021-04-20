@@ -20,7 +20,7 @@ namespace ORB_SLAM2 {
     typedef std::array<std::array<float, 2>, 8> Box2DPoints;
     class KeyObject {
     public:
-        KeyObject(CenterPoints center, float length, float width, float height, float theta, Box2DPoints box2D);
+        KeyObject(const CenterPoints& center, float length, float width, float height, float theta, const Box2DPoints& box2D);
         KeyObject(const KeyObject& ko);
 
         CenterPoints mCenter{};

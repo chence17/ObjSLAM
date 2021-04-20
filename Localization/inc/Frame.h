@@ -23,6 +23,8 @@
 
 #include <opencv2/opencv.hpp>
 #include <vector>
+#include <nlohmann/json.hpp>
+#include <cmath>
 
 #include "KeyFrame.h"
 #include "MapPoint.h"
@@ -30,6 +32,7 @@
 #include "ORBextractor.h"
 #include "third_party/DBoW2/DBoW2/BowVector.h"
 #include "third_party/DBoW2/DBoW2/FeatureVector.h"
+#include "KeyObject.h"
 
 namespace ORB_SLAM2 {
 #define FRAME_GRID_ROWS 48
@@ -46,10 +49,11 @@ class Frame {
   Frame(const Frame &frame);
 
   // Constructor for stereo cameras.
+  // NOTE: ObjSLAM
   Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp,
         ORBextractor *extractorLeft, ORBextractor *extractorRight,
         ORBVocabulary *voc, cv::Mat &K, cv::Mat &distCoef, const float &bf,
-        const float &thDepth);
+        const float &thDepth, nlohmann::json &kol);
 
   // Constructor for RGB-D cameras.
   Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeStamp,
@@ -193,6 +197,9 @@ class Frame {
   static float mnMaxY;
 
   static bool mbInitialComputations;
+
+  // NOTE: ObjSLAM
+  vector<KeyObject> mvKeyObjList;
 
  private:
   // Undistort keypoints given OpenCV distortion parameters.

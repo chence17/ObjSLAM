@@ -1,7 +1,7 @@
 /*
  * @Author: Antonio Chan
  * @Date: 2021-04-14 17:05:55
- * @LastEditTime: 2021-04-14 17:50:07
+ * @LastEditTime: 2021-04-20 14:58:32
  * @LastEditors: Antonio Chan
  * @Description: Modified from ORB-SLAM2
  * @FilePath: /Localization/inc/Socket.h
@@ -9,6 +9,9 @@
 
 // https://blog.csdn.net/shyjhyp11/article/details/109891396
 // https://blog.csdn.net/qq_27664167/article/details/103312462
+
+#ifndef INC_SOCKET_H_
+#define INC_SOCKET_H_
 
 #include <boost/asio.hpp>
 #include <chrono>
@@ -43,3 +46,5 @@ class Socket {
 };
 
 }  // namespace ORB_SLAM2
+
+#endif  // INC_SOCKET_H_

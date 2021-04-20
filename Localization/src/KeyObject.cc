@@ -1,7 +1,7 @@
 #include "KeyObject.h"
 
 namespace ORB_SLAM2 {
-    KeyObject::KeyObject(CenterPoints center, float length, float width, float height, float theta, Box2DPoints box2D) :
+    KeyObject::KeyObject(const CenterPoints& center, float length, float width, float height, float theta, const Box2DPoints& box2D) :
             mCenter(center), mLength(length), mWidth(width), mHeight(height), mTheta(theta), mBox2D(box2D) {
         this->mTcw.create(4, 4, CV_32F);
         this->mTcw.at<float>(0, 0) = std::cos(this->mTheta);
