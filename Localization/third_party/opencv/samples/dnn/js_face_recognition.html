@@ -17,7 +17,7 @@ function detectFaces(img) {
   var out = netDet.forward();
 
   var faces = [];
-  for (var i = 0, n = out.data32F.length; i < n; i += 7) {
+  for (var i = 0, n = out.data32F.mLength; i < n; i += 7) {
     var confidence = out.data32F[i + 2];
     var left = out.data32F[i + 3] * img.cols;
     var top = out.data32F[i + 4] * img.rows;

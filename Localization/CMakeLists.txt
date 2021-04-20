@@ -81,6 +81,7 @@ src/Sim3Solver.cc
 src/Initializer.cc
 src/Viewer.cc
 src/Socket.cc
+src/KeyObject.cc
 )
 
 target_link_libraries(${PROJECT_NAME}

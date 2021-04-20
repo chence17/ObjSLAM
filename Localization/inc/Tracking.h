@@ -25,6 +25,8 @@
 #include<opencv2/core/core.hpp>
 #include<opencv2/features2d/features2d.hpp>
 
+#include <nlohmann/json.hpp>
+
 #include"Viewer.h"
 #include"FrameDrawer.h"
 #include"Map.h"
@@ -37,6 +39,7 @@
 #include "Initializer.h"
 #include "MapDrawer.h"
 #include "System.h"
+#include "Socket.h"
 
 #include <mutex>
 
@@ -49,6 +52,7 @@ class Map;
 class LocalMapping;
 class LoopClosing;
 class System;
+class Socket;
 
 class Tracking
 {  
@@ -65,6 +69,9 @@ public:
     void SetLocalMapper(LocalMapping* pLocalMapper);
     void SetLoopClosing(LoopClosing* pLoopClosing);
     void SetViewer(Viewer* pViewer);
+
+    // NOTE: ObjSLAM
+    void SetSocket(Socket* pSocket);
 
     // Load new settings
     // The focal lenght should be similar or scale prediction will fail when projecting points
@@ -214,6 +221,9 @@ protected:
     bool mbRGB;
 
     list<MapPoint*> mlpTemporalPoints;
+
+    // Note: ObjSLAM
+    Socket *mpSocket;
 };
 
 } //namespace ORB_SLAM

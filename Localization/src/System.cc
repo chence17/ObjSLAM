@@ -118,6 +118,7 @@ System::System(const string &strVocFile, const string &strSettingsFile,
   // Set pointers between threads
   mpTracker->SetLocalMapper(mpLocalMapper);
   mpTracker->SetLoopClosing(mpLoopCloser);
+  mpTracker->SetSocket(mpSocket);
 
   mpLocalMapper->SetTracker(mpTracker);
   mpLocalMapper->SetLoopCloser(mpLoopCloser);
@@ -166,10 +167,6 @@ cv::Mat System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight,
   }
 
   cv::Mat Tcw = mpTracker->GrabImageStereo(imLeft, imRight, timestamp);
-
-  // NOTE: Socket
-  json Det = mpSocket->Receive();
-  // std::cout << Det.dump(4) << std::endl;
 
   unique_lock<mutex> lock2(mMutexState);
   mTrackingState = mpTracker->mState;

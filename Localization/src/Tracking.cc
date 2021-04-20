@@ -197,6 +197,10 @@ cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRe
         }
     }
 
+    // NOTE: Socket
+    json Det = mpSocket->Receive();
+    // std::cout << Det.dump(4) << std::endl;
+
     mCurrentFrame = Frame(mImGray,imGrayRight,timestamp,mpORBextractorLeft,mpORBextractorRight,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
 
     Track();
@@ -1588,6 +1592,9 @@ void Tracking::InformOnlyTracking(const bool &flag)
     mbOnlyTracking = flag;
 }
 
+void Tracking::SetSocket(Socket* pSocket) {
+    mpSocket = pSocket;
+}
 
 
 } //namespace ORB_SLAM
