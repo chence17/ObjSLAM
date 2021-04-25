@@ -120,11 +120,13 @@ cv::Mat FrameDrawer::DrawFrame()
     }
 
     cv::Mat imWithInfo;
+    // NOTE: ObjSLAM
+    this->Draw2DBox(im);
+
     DrawTextInfo(im,state, imWithInfo);
 
     return imWithInfo;
 }
-
 
 void FrameDrawer::DrawTextInfo(cv::Mat &im, int nState, cv::Mat &imText)
 {
@@ -144,6 +146,8 @@ void FrameDrawer::DrawTextInfo(cv::Mat &im, int nState, cv::Mat &imText)
         s << "KFs: " << nKFs << ", MPs: " << nMPs << ", Matches: " << mnTracked;
         if(mnTrackedVO>0)
             s << ", + VO matches: " << mnTrackedVO;
+        // NOTE: ObjSLAM
+        s << ", nObjs: " << this->mvKeyObjQuantity;
     }
     else if(nState==Tracking::LOST)
     {
@@ -164,6 +168,43 @@ void FrameDrawer::DrawTextInfo(cv::Mat &im, int nState, cv::Mat &imText)
 
 }
 
+void FrameDrawer::Draw2DBox(cv::Mat &im) {
+    this->mvKeyObjQuantity = 0;
+    cv::Scalar bc(183, 118, 35);
+    for(unsigned int i=0; i<this->mvKeyObjList.size(); i++){
+        if(this->mvKeyObjList.at(i).mValid){
+            this->mvKeyObjQuantity += 1;
+            unsigned int m = 0;
+            unsigned int n = 0;
+            for(unsigned int j=0; j<4; j++){
+                m = j;
+                n = (j+1)%4;
+                cv::Point p1(std::ceil(this->mvKeyObjList.at(i).mBox2D.at(m).at(0)),
+                             std::ceil(this->mvKeyObjList.at(i).mBox2D.at(m).at(1)));
+                cv::Point p2(std::ceil(this->mvKeyObjList.at(i).mBox2D.at(n).at(0)),
+                             std::ceil(this->mvKeyObjList.at(i).mBox2D.at(n).at(1)));
+                cv::line(im, p1, p2, bc, 2);
+
+                m = j+4;
+                n = ((j+1)%4)+4;
+                cv::Point p3(std::ceil(this->mvKeyObjList.at(i).mBox2D.at(m).at(0)),
+                             std::ceil(this->mvKeyObjList.at(i).mBox2D.at(m).at(1)));
+                cv::Point p4(std::ceil(this->mvKeyObjList.at(i).mBox2D.at(n).at(0)),
+                             std::ceil(this->mvKeyObjList.at(i).mBox2D.at(n).at(1)));
+                cv::line(im, p3, p4, bc, 2);
+
+                m = j;
+                n = j+4;
+                cv::Point p5(std::ceil(this->mvKeyObjList.at(i).mBox2D.at(m).at(0)),
+                             std::ceil(this->mvKeyObjList.at(i).mBox2D.at(m).at(1)));
+                cv::Point p6(std::ceil(this->mvKeyObjList.at(i).mBox2D.at(n).at(0)),
+                             std::ceil(this->mvKeyObjList.at(i).mBox2D.at(n).at(1)));
+                cv::line(im, p5, p6, bc, 2);
+            }
+        }
+    }
+}
+
 void FrameDrawer::Update(Tracking *pTracker)
 {
     unique_lock<mutex> lock(mMutex);
@@ -174,6 +215,9 @@ void FrameDrawer::Update(Tracking *pTracker)
     mvbMap = vector<bool>(N,false);
     mbOnlyTracking = pTracker->mbOnlyTracking;
 
+    // NOTE: ObjSLAM
+    this->mvKeyObjList = pTracker->mCurrentFrame.mvKeyObjList;
+    this->mvKeyObjQuantity = 0;
 
     if(pTracker->mLastProcessedState==Tracking::NOT_INITIALIZED)
     {

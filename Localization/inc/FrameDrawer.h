@@ -23,8 +23,10 @@
 
 #include "Tracking.h"
 #include "MapPoint.h"
+#include "KeyObject.h"
 #include "Map.h"
 
+#include<cmath>
 #include<opencv2/core/core.hpp>
 #include<opencv2/features2d/features2d.hpp>
 
@@ -52,6 +54,9 @@ protected:
 
     void DrawTextInfo(cv::Mat &im, int nState, cv::Mat &imText);
 
+    // NOTE: ObjSLAM
+    void Draw2DBox(cv::Mat &im);
+
     // Info of the frame to be drawn
     cv::Mat mIm;
     int N;
@@ -62,6 +67,10 @@ protected:
     vector<cv::KeyPoint> mvIniKeys;
     vector<int> mvIniMatches;
     int mState;
+
+    // NOTE: ObjSLAM
+    std::vector<KeyObject> mvKeyObjList;
+    unsigned int mvKeyObjQuantity;
 
     Map* mpMap;
 
