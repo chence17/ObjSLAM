@@ -28,6 +28,7 @@
 #include "MapPoint.h"
 #include "ORBVocabulary.h"
 #include "ORBextractor.h"
+#include "KeyObject.h"
 #include "third_party/DBoW2/DBoW2/BowVector.h"
 #include "third_party/DBoW2/DBoW2/FeatureVector.h"
 
@@ -160,6 +161,9 @@ class KeyFrame {
   const std::vector<float> mvuRight;  // negative value for monocular points
   const std::vector<float> mvDepth;   // negative value for monocular points
   const cv::Mat mDescriptors;
+
+  // NOTE: ObjSLAM
+  std::vector<KeyObject> mvKeyObjList;
 
   // BoW
   DBoW2::BowVector mBowVec;

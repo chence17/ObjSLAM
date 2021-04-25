@@ -201,7 +201,6 @@ cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRe
     json Detections = mpSocket->Receive();
 
     mCurrentFrame = Frame(mImGray,imGrayRight,timestamp,mpORBextractorLeft,mpORBextractorRight,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,Detections);
-
     // NOTE: ObjSLAM
     cout << "CurrentFrameObjectQuantity: " << mCurrentFrame.mvKeyObjList.size() << endl;
 

@@ -425,6 +425,53 @@ void Optimizer::LocalBundleAdjustment(KeyFrame* pKF, bool* pbStopFlag,
     KeyFrame* pKFi = vNeighKFs[i];
     pKFi->mnBALocalForKF = pKF->mnId;
     if (!pKFi->isBad()) lLocalKeyFrames.push_back(pKFi);
+    // cout << "Tcw rows and cols: " << pKFi->GetPose().rows << ", " << pKFi->GetPose().cols << endl;
+  }
+
+  // NOTE: 获取Local Frames看到的所有的物体构成的向量
+  vector<vector<pair<KeyFrame*, unsigned int>>> lLocalKeyObjects;
+  for (unsigned int i = 0; i<lLocalKeyFrames.size(); i++) {
+    list<KeyFrame*>::iterator lit=lLocalKeyFrames.begin();
+    advance(lit,i); //取其中第i个元素
+    vector<KeyObject> vpKOs = (*lit)->mvKeyObjList;
+    for (unsigned int j = 0; j<vpKOs.size(); j++){
+      if(vpKOs[j].mValid){
+        pair<KeyFrame*, unsigned int> currentPair(*lit, j);
+        if(lLocalKeyObjects.empty()){
+            vector<pair<KeyFrame*, unsigned int>> initialVector;
+            initialVector.push_back(currentPair);
+            lLocalKeyObjects.push_back(initialVector);
+        } else {
+            vector<double> MeanErrorVector;
+            for (unsigned int k = 0; k<lLocalKeyObjects.size(); k++){
+                double MeanError = 0;
+                for (int l = 0; l<lLocalKeyObjects[k].size(); l++){
+                    pair<KeyFrame*, int> comparePair = lLocalKeyObjects[k][l];
+                    MeanError+= ComputeObjectPoseDistance(currentPair.first->mvKeyObjList[currentPair.second].mTcw,
+                                                          currentPair.first->GetPose(),
+                                                          comparePair.first->mvKeyObjList[comparePair.second].mTcw,
+                                                          comparePair.first->GetPose());
+                }
+                if(MeanError==0){
+                    MeanError = numeric_limits<double>::max();
+                }
+                MeanError /= static_cast<double>(lLocalKeyObjects[k].size());
+                MeanErrorVector.push_back(MeanError);
+            }
+            double minError = *min_element(MeanErrorVector.begin(), MeanErrorVector.end());
+            unsigned int minPosition = min_element(MeanErrorVector.begin(),MeanErrorVector.end()) - MeanErrorVector.begin();
+            // cout << "KeyFrame(i), Object(j), MinPosition(k), MeanError: " << i << ", " << j << ", " << minPosition << ", " << minError << endl;
+            if(minError<5.0){
+                lLocalKeyObjects[minPosition].push_back(currentPair);
+            } else {
+                vector<pair<KeyFrame*, unsigned int>> initialVector;
+                initialVector.push_back(currentPair);
+                lLocalKeyObjects.push_back(initialVector);
+            }
+        }
+      }
+    }
+    // cout << endl;
   }
 
   // Local MapPoints seen in Local KeyFrames
@@ -463,6 +510,110 @@ void Optimizer::LocalBundleAdjustment(KeyFrame* pKF, bool* pbStopFlag,
         if (!pKFi->isBad()) lFixedCameras.push_back(pKFi);
       }
     }
+  }
+
+  // NOTE: 将Fixed的Frame中的物体与之前在Frames中找到的物体进行匹配并得到Fixed的Frames
+  // 与之前在Frames中找到的物体的对应关系
+  for (unsigned int i = 0; i<lFixedCameras.size(); i++) {
+      list<KeyFrame*>::iterator lit=lFixedCameras.begin();
+      advance(lit,i); //取其中第i个元素
+      vector<KeyObject> vpKOs = (*lit)->mvKeyObjList;
+      for (unsigned int j = 0; j<vpKOs.size(); j++){
+          if(vpKOs[j].mValid){
+              pair<KeyFrame*, unsigned int> currentPair(*lit, j);
+              if(lLocalKeyObjects.empty()){
+                  vector<pair<KeyFrame*, unsigned int>> initialVector;
+                  initialVector.push_back(currentPair);
+                  lLocalKeyObjects.push_back(initialVector);
+              } else {
+                  vector<double> MeanErrorVector;
+                  for (unsigned int k = 0; k<lLocalKeyObjects.size(); k++){
+                      double MeanError = 0;
+                      for (int l = 0; l<lLocalKeyObjects[k].size(); l++){
+                          pair<KeyFrame*, int> comparePair = lLocalKeyObjects[k][l];
+                          MeanError+= ComputeObjectPoseDistance(currentPair.first->mvKeyObjList[currentPair.second].mTcw,
+                                                                currentPair.first->GetPose(),
+                                                                comparePair.first->mvKeyObjList[comparePair.second].mTcw,
+                                                                comparePair.first->GetPose());
+                      }
+                      if(MeanError==0){
+                          MeanError = numeric_limits<double>::max();
+                      }
+                      MeanError /= static_cast<double>(lLocalKeyObjects[k].size());
+                      MeanErrorVector.push_back(MeanError);
+                  }
+                  double minError = *min_element(MeanErrorVector.begin(), MeanErrorVector.end());
+                  unsigned int minPosition = min_element(MeanErrorVector.begin(),MeanErrorVector.end()) - MeanErrorVector.begin();
+                  // cout << "KeyFrame(i), Object(j), MinPosition(k), MeanError: " << i << ", " << j << ", " << minPosition << ", " << minError << endl;
+                  if(minError<5.0){
+                      lLocalKeyObjects[minPosition].push_back(currentPair);
+                  } else {
+                      vector<pair<KeyFrame*, unsigned int>> initialVector;
+                      initialVector.push_back(currentPair);
+                      lLocalKeyObjects.push_back(initialVector);
+                  }
+              }
+          }
+      }
+      // cout << endl;
+  }
+
+  // NOTE: 去除只有一个元素的物体观察列表
+  vector<bool> lValidLocalKeyObjects;
+  vector<vector<unsigned int>> lLocalKeyObjectsIndex;
+  for (unsigned int i = 0; i<lLocalKeyObjects.size(); i++) {
+      unsigned int kfQuantity = 0;
+      vector<unsigned int> currentIndexVector;
+      for (unsigned int j = 0; j<lLocalKeyObjects[i].size(); j++) {
+          if(j==0) {
+              kfQuantity += 1;
+              currentIndexVector.push_back(j);
+          } else {
+              if(lLocalKeyObjects[i][j].first!=lLocalKeyObjects[i][j-1].first) {
+                  kfQuantity += 1;
+                  currentIndexVector.push_back(j);
+              }
+          }
+      }
+      lLocalKeyObjectsIndex.push_back(currentIndexVector);
+      if(kfQuantity<2){
+          // cout << "lLocalKeyObjects[i].size() " << lLocalKeyObjects[i].size() << " false" << endl;
+          lValidLocalKeyObjects.push_back(false);
+      } else {
+          // cout << "lLocalKeyObjects[i].size() " << lLocalKeyObjects[i].size() << " true" << endl;
+          lValidLocalKeyObjects.push_back(true);
+      }
+  }
+  // cout << "lLocalKeyObjects.size() " << lLocalKeyObjects.size() << endl;
+  // cout << "lValidLocalKeyObjects.size() " << lValidLocalKeyObjects.size() << endl;
+  // cout << "lLocalKeyObjectsIndex.size() " << lLocalKeyObjectsIndex.size() << endl;
+
+  // NOTE: 矫正同一帧中处于相同物体观察列表的位姿
+  for(unsigned int i = 0; i<lLocalKeyObjectsIndex.size(); i++){
+      for(unsigned int j = 0; j<lLocalKeyObjectsIndex[i].size(); j++){
+          if(j==0){
+              continue;
+          } else {
+              if (lLocalKeyObjectsIndex[i][j]-lLocalKeyObjectsIndex[i][j-1]!=1) {
+                  KeyFrame* cKeyF = lLocalKeyObjects[i][lLocalKeyObjectsIndex[i][j-1]].first;
+                  unsigned int cObjI = lLocalKeyObjects[i][lLocalKeyObjectsIndex[i][j-1]].second;
+                  cv::Mat MeanTcw = cKeyF->mvKeyObjList[cObjI].mTcw;
+                  for(unsigned int k=lLocalKeyObjectsIndex[i][j-1]+1; k<lLocalKeyObjectsIndex[i][j]; k++)
+                  {
+                      cKeyF = lLocalKeyObjects[i][k].first;
+                      cObjI = lLocalKeyObjects[i][k].second;
+                      MeanTcw += cKeyF->mvKeyObjList[cObjI].mTcw;
+                  }
+                  MeanTcw /= lLocalKeyObjectsIndex[i][j]-lLocalKeyObjectsIndex[i][j-1];
+                  for(unsigned int k=lLocalKeyObjectsIndex[i][j-1]; k<lLocalKeyObjectsIndex[i][j]; k++)
+                  {
+                      cKeyF = lLocalKeyObjects[i][k].first;
+                      cObjI = lLocalKeyObjects[i][k].second;
+                      cKeyF->mvKeyObjList[cObjI].SetTcw(MeanTcw);
+                  }
+              }
+          }
+      }
   }
 
   // Setup optimizer
@@ -508,6 +659,9 @@ void Optimizer::LocalBundleAdjustment(KeyFrame* pKF, bool* pbStopFlag,
     if (pKFi->mnId > maxKFid) maxKFid = pKFi->mnId;
   }
 
+  // NOTE: ObjSLAM
+  unsigned long maxMPid = 0;
+
   // Set MapPoint vertices
   const int nExpectedSize =
       (lLocalKeyFrames.size() + lFixedCameras.size()) * lLocalMapPoints.size();
@@ -540,6 +694,8 @@ void Optimizer::LocalBundleAdjustment(KeyFrame* pKF, bool* pbStopFlag,
     g2o::VertexSBAPointXYZ* vPoint = new g2o::VertexSBAPointXYZ();
     vPoint->setEstimate(Converter::toVector3d(pMP->GetWorldPos()));
     int id = pMP->mnId + maxKFid + 1;
+    // NOTE: ObjSLAM
+    if (id > maxMPid) maxMPid = id;
     vPoint->setId(id);
     vPoint->setMarginalized(true);
     optimizer.addVertex(vPoint);
@@ -624,9 +780,7 @@ void Optimizer::LocalBundleAdjustment(KeyFrame* pKF, bool* pbStopFlag,
 
   optimizer.initializeOptimization();
   optimizer.optimize(5);
-
   bool bDoMore = true;
-
   if (pbStopFlag)
     if (*pbStopFlag) bDoMore = false;
 
@@ -704,6 +858,51 @@ void Optimizer::LocalBundleAdjustment(KeyFrame* pKF, bool* pbStopFlag,
     }
   }
 
+  // NOTE: 设置 KeyObjects 的顶点和边
+  for(unsigned int i=0;i<lLocalKeyObjects.size();i++){
+    if(lValidLocalKeyObjects[i]){
+      // Set Vertex
+      g2o::VertexSE3Expmap* vSE3 = new g2o::VertexSE3Expmap();
+      KeyFrame* SrcFrame = lLocalKeyObjects[i][0].first;
+      unsigned int SrcObjIndex = lLocalKeyObjects[i][0].second;
+      cv::Mat SrcFrameTcw = SrcFrame->GetPose();
+      cv::Mat SrcObjectTcw = SrcFrame->mvKeyObjList[SrcObjIndex].mTcw;
+      cv::Mat ObjWorldTcw = SrcFrameTcw*SrcObjectTcw;
+      vSE3->setEstimate(Converter::toSE3Quat(ObjWorldTcw));
+      int id = i + maxMPid + 1;
+      vSE3->setId(id);
+      vSE3->setFixed(false);
+      optimizer.addVertex(vSE3);
+
+      // cout << "[INFO] Set Vertex Complete. i: " << i << " / " << lLocalKeyObjects.size() << endl;
+
+      for(unsigned int j=0;j<lLocalKeyObjectsIndex[i].size();j++){
+        unsigned int validIndex = lLocalKeyObjectsIndex[i][j];
+        SrcFrame = lLocalKeyObjects[i][validIndex].first;
+        SrcObjIndex = lLocalKeyObjects[i][validIndex].second;
+        g2o::EdgeSim3* e = new g2o::EdgeSim3();
+        if(optimizer.vertex(id) == NULL || optimizer.vertex(SrcFrame->mnId) == NULL) continue;
+        e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(
+                optimizer.vertex(id)));
+        e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(
+                optimizer.vertex(SrcFrame->mnId)));
+        Eigen::Matrix<double, 3, 3> Rcw =
+                Converter::toMatrix3d(SrcFrame->mvKeyObjList[SrcObjIndex].GetRotation());
+        Eigen::Matrix<double, 3, 1> tcw =
+                Converter::toVector3d(SrcFrame->mvKeyObjList[SrcObjIndex].GetTranslation());
+        g2o::Sim3 Sfo(Rcw, tcw, 1.0);
+        e->setMeasurement(Sfo);
+        e->information() = Eigen::Matrix<double, 7, 7>::Identity();
+        optimizer.addEdge(e);
+
+        // cout << "[INFO] Set Edge Complete. j: " << j << " / " << lLocalKeyObjectsIndex[i].size() << endl;
+      }
+    }
+  }
+  // cout << "[INFO] Done." << endl;
+
+  optimizer.optimize(5);
+
   // Recover optimized data
 
   // Keyframes
@@ -715,6 +914,24 @@ void Optimizer::LocalBundleAdjustment(KeyFrame* pKF, bool* pbStopFlag,
         static_cast<g2o::VertexSE3Expmap*>(optimizer.vertex(pKF->mnId));
     g2o::SE3Quat SE3quat = vSE3->estimate();
     pKF->SetPose(Converter::toCvMat(SE3quat));
+  }
+
+  // NOTE: 更新物体的位姿
+  for(unsigned int i=0;i<lLocalKeyObjects.size();i++){
+      if(lValidLocalKeyObjects[i]){
+          int id = i + maxMPid + 1;
+          g2o::VertexSE3Expmap* vSE3 =
+                  static_cast<g2o::VertexSE3Expmap*>(optimizer.vertex(id));
+          g2o::SE3Quat SE3quat = vSE3->estimate();
+          cv::Mat ObjWorldTcw = Converter::toCvMat(SE3quat);
+          for(unsigned int j=0;j<lLocalKeyObjects[i].size();j++) {
+              KeyFrame* SrcFrame = lLocalKeyObjects[i][j].first;
+              unsigned int SrcObjIndex = lLocalKeyObjects[i][j].second;
+              cv::Mat SrcFrameTcwInv;
+              cv::invert(SrcFrame->GetPose(), SrcFrameTcwInv);
+              SrcFrame->mvKeyObjList[SrcObjIndex].SetTcw(SrcFrameTcwInv*ObjWorldTcw);
+          }
+      }
   }
 
   // Points

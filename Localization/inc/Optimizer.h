@@ -34,6 +34,8 @@
 #include "LoopClosing.h"
 #include "Map.h"
 #include "MapPoint.h"
+#include "KeyObject.h"
+#include<algorithm>
 #include "third_party/g2o/g2o/types/types_seven_dof_expmap.h"
 
 namespace ORB_SLAM2 {

@@ -132,11 +132,13 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
             } else if(theta==-pi/2){
                 theta = pi;
             }
+            bool valid = true;
             CenterPoints center;
             if(!element["center"].empty()){
                 center = element["center"].get<CenterPoints>();
             } else {
                 center = {0.0, 0.0, 0.0};
+                valid = false;
             }
             Box2DPoints box2D;
             if(!element["box3d_pts_2d"].empty()){
@@ -145,8 +147,9 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
                 for(auto& pt : box2D) {
                     pt = {0.0, 0.0};
                 }
+                valid = false;
             }
-            mvKeyObjList.emplace_back(center, length, width, height, theta, box2D);
+            mvKeyObjList.emplace_back(center, length, width, height, theta, box2D, valid);
         }
     }
 }
