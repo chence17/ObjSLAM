@@ -69,6 +69,51 @@ bool VertexSE3Expmap::write(std::ostream& os) const {
   return os.good();
 }
 
+EdgeSE3Expmap::EdgeSE3Expmap() : BaseBinaryEdge<6, SE3Quat, VertexSE3Expmap, VertexSE3Expmap>(){
+}
+
+bool EdgeSE3Expmap::read(std::istream& is) {
+    Vector7d meas;
+    for (int i=0; i<7; i++)
+        is  >> meas[i];
+    SE3Quat cam2world;
+    cam2world.fromVector(meas);
+    setMeasurement(cam2world.inverse());
+    return true;
+}
+
+bool EdgeSE3Expmap::write(std::ostream& os) const {
+    SE3Quat cam2world(measurement().inverse());
+    for (int i=0; i<7; i++)
+        os << cam2world[i] << " ";
+    return os.good();
+}
+
+void EdgeSE3Expmap::computeError() {
+    const VertexSE3Expmap* v1 = static_cast<const VertexSE3Expmap*>(_vertices[0]);
+    const VertexSE3Expmap* v2 = static_cast<const VertexSE3Expmap*>(_vertices[1]);
+
+    SE3Quat C(_measurement);
+    SE3Quat error_ = v2->estimate().inverse() * C * v1->estimate();
+    _error = error_.log();
+}
+
+void EdgeSE3Expmap::linearizeOplus() {
+    VertexSE3Expmap* vi = static_cast<VertexSE3Expmap*>(_vertices[0]);
+    SE3Quat Ti(vi->estimate());
+
+    VertexSE3Expmap* vj = static_cast<VertexSE3Expmap*>(_vertices[1]);
+    SE3Quat Tj(vj->estimate());
+
+    const SE3Quat& Tij = _measurement;
+    SE3Quat invTij = Tij.inverse();
+
+    SE3Quat invTj_Tij = Tj.inverse() * Tij;
+    SE3Quat infTi_invTij = Ti.inverse() * invTij;
+
+    _jacobianOplusXi = invTj_Tij.adj();
+    _jacobianOplusXj = -infTi_invTij.adj();
+}
 
 EdgeSE3ProjectXYZ::EdgeSE3ProjectXYZ() : BaseBinaryEdge<2, Vector2d, VertexSBAPointXYZ, VertexSE3Expmap>() {
 }
@@ -362,6 +407,5 @@ void EdgeStereoSE3ProjectXYZOnlyPose::linearizeOplus() {
   _jacobianOplusXi(2,4) = 0;
   _jacobianOplusXi(2,5) = _jacobianOplusXi(0,5)-bf*invz_2;
 }
-
 
 } // end namespace

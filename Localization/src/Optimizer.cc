@@ -431,48 +431,48 @@ void Optimizer::LocalBundleAdjustment(KeyFrame* pKF, bool* pbStopFlag,
   // NOTE: 获取Local Frames看到的所有的物体构成的向量
   vector<vector<pair<KeyFrame*, unsigned int>>> lLocalKeyObjects;
   for (unsigned int i = 0; i<lLocalKeyFrames.size(); i++) {
-    list<KeyFrame*>::iterator lit=lLocalKeyFrames.begin();
-    advance(lit,i); //取其中第i个元素
-    vector<KeyObject> vpKOs = (*lit)->mvKeyObjList;
-    for (unsigned int j = 0; j<vpKOs.size(); j++){
-      if(vpKOs[j].mValid){
-        pair<KeyFrame*, unsigned int> currentPair(*lit, j);
-        if(lLocalKeyObjects.empty()){
-            vector<pair<KeyFrame*, unsigned int>> initialVector;
-            initialVector.push_back(currentPair);
-            lLocalKeyObjects.push_back(initialVector);
-        } else {
-            vector<double> MeanErrorVector;
-            for (unsigned int k = 0; k<lLocalKeyObjects.size(); k++){
-                double MeanError = 0;
-                for (int l = 0; l<lLocalKeyObjects[k].size(); l++){
-                    pair<KeyFrame*, int> comparePair = lLocalKeyObjects[k][l];
-                    MeanError+= ComputeObjectPoseDistance(currentPair.first->mvKeyObjList[currentPair.second].mTcw,
-                                                          currentPair.first->GetPose(),
-                                                          comparePair.first->mvKeyObjList[comparePair.second].mTcw,
-                                                          comparePair.first->GetPose());
+        list<KeyFrame*>::iterator lit=lLocalKeyFrames.begin();
+        advance(lit,i); //取其中第i个元素
+        vector<KeyObject> vpKOs = (*lit)->mvKeyObjList;
+        for (unsigned int j = 0; j<vpKOs.size(); j++){
+            if(vpKOs[j].mValid){
+                pair<KeyFrame*, unsigned int> currentPair(*lit, j);
+                if(lLocalKeyObjects.empty()){
+                    vector<pair<KeyFrame*, unsigned int>> initialVector;
+                    initialVector.push_back(currentPair);
+                    lLocalKeyObjects.push_back(initialVector);
+                } else {
+                    vector<double> MeanErrorVector;
+                    for (unsigned int k = 0; k<lLocalKeyObjects.size(); k++){
+                        double MeanError = 0;
+                        for (int l = 0; l<lLocalKeyObjects[k].size(); l++){
+                            pair<KeyFrame*, int> comparePair = lLocalKeyObjects[k][l];
+                            MeanError+= ComputeObjectPoseDistance(currentPair.first->mvKeyObjList[currentPair.second].mTcw,
+                                                                  currentPair.first->GetPose(),
+                                                                  comparePair.first->mvKeyObjList[comparePair.second].mTcw,
+                                                                  comparePair.first->GetPose());
+                        }
+                        if(MeanError==0){
+                            MeanError = numeric_limits<double>::max();
+                        }
+                        MeanError /= static_cast<double>(lLocalKeyObjects[k].size());
+                        MeanErrorVector.push_back(MeanError);
+                    }
+                    double minError = *min_element(MeanErrorVector.begin(), MeanErrorVector.end());
+                    unsigned int minPosition = min_element(MeanErrorVector.begin(),MeanErrorVector.end()) - MeanErrorVector.begin();
+                    // cout << "KeyFrame(i), Object(j), MinPosition(k), MeanError: " << i << ", " << j << ", " << minPosition << ", " << minError << endl;
+                    if(minError<0.5){
+                        lLocalKeyObjects[minPosition].push_back(currentPair);
+                    } else {
+                        vector<pair<KeyFrame*, unsigned int>> initialVector;
+                        initialVector.push_back(currentPair);
+                        lLocalKeyObjects.push_back(initialVector);
+                    }
                 }
-                if(MeanError==0){
-                    MeanError = numeric_limits<double>::max();
-                }
-                MeanError /= static_cast<double>(lLocalKeyObjects[k].size());
-                MeanErrorVector.push_back(MeanError);
-            }
-            double minError = *min_element(MeanErrorVector.begin(), MeanErrorVector.end());
-            unsigned int minPosition = min_element(MeanErrorVector.begin(),MeanErrorVector.end()) - MeanErrorVector.begin();
-            // cout << "KeyFrame(i), Object(j), MinPosition(k), MeanError: " << i << ", " << j << ", " << minPosition << ", " << minError << endl;
-            if(minError<5.0){
-                lLocalKeyObjects[minPosition].push_back(currentPair);
-            } else {
-                vector<pair<KeyFrame*, unsigned int>> initialVector;
-                initialVector.push_back(currentPair);
-                lLocalKeyObjects.push_back(initialVector);
             }
         }
-      }
+        // cout << endl;
     }
-    // cout << endl;
-  }
 
   // Local MapPoints seen in Local KeyFrames
   list<MapPoint*> lLocalMapPoints;
@@ -515,118 +515,121 @@ void Optimizer::LocalBundleAdjustment(KeyFrame* pKF, bool* pbStopFlag,
   // NOTE: 将Fixed的Frame中的物体与之前在Frames中找到的物体进行匹配并得到Fixed的Frames
   // 与之前在Frames中找到的物体的对应关系
   for (unsigned int i = 0; i<lFixedCameras.size(); i++) {
-      list<KeyFrame*>::iterator lit=lFixedCameras.begin();
-      advance(lit,i); //取其中第i个元素
-      vector<KeyObject> vpKOs = (*lit)->mvKeyObjList;
-      for (unsigned int j = 0; j<vpKOs.size(); j++){
-          if(vpKOs[j].mValid){
-              pair<KeyFrame*, unsigned int> currentPair(*lit, j);
-              if(lLocalKeyObjects.empty()){
-                  vector<pair<KeyFrame*, unsigned int>> initialVector;
-                  initialVector.push_back(currentPair);
-                  lLocalKeyObjects.push_back(initialVector);
-              } else {
-                  vector<double> MeanErrorVector;
-                  for (unsigned int k = 0; k<lLocalKeyObjects.size(); k++){
-                      double MeanError = 0;
-                      for (int l = 0; l<lLocalKeyObjects[k].size(); l++){
-                          pair<KeyFrame*, int> comparePair = lLocalKeyObjects[k][l];
-                          MeanError+= ComputeObjectPoseDistance(currentPair.first->mvKeyObjList[currentPair.second].mTcw,
-                                                                currentPair.first->GetPose(),
-                                                                comparePair.first->mvKeyObjList[comparePair.second].mTcw,
-                                                                comparePair.first->GetPose());
-                      }
-                      if(MeanError==0){
-                          MeanError = numeric_limits<double>::max();
-                      }
-                      MeanError /= static_cast<double>(lLocalKeyObjects[k].size());
-                      MeanErrorVector.push_back(MeanError);
-                  }
-                  double minError = *min_element(MeanErrorVector.begin(), MeanErrorVector.end());
-                  unsigned int minPosition = min_element(MeanErrorVector.begin(),MeanErrorVector.end()) - MeanErrorVector.begin();
-                  // cout << "KeyFrame(i), Object(j), MinPosition(k), MeanError: " << i << ", " << j << ", " << minPosition << ", " << minError << endl;
-                  if(minError<5.0){
-                      lLocalKeyObjects[minPosition].push_back(currentPair);
-                  } else {
-                      vector<pair<KeyFrame*, unsigned int>> initialVector;
-                      initialVector.push_back(currentPair);
-                      lLocalKeyObjects.push_back(initialVector);
-                  }
-              }
-          }
-      }
-      // cout << endl;
-  }
+        list<KeyFrame*>::iterator lit=lFixedCameras.begin();
+        advance(lit,i); //取其中第i个元素
+        vector<KeyObject> vpKOs = (*lit)->mvKeyObjList;
+        for (unsigned int j = 0; j<vpKOs.size(); j++){
+            if(vpKOs[j].mValid){
+                pair<KeyFrame*, unsigned int> currentPair(*lit, j);
+                if(lLocalKeyObjects.empty()){
+                    vector<pair<KeyFrame*, unsigned int>> initialVector;
+                    initialVector.push_back(currentPair);
+                    lLocalKeyObjects.push_back(initialVector);
+                } else {
+                    vector<double> MeanErrorVector;
+                    for (unsigned int k = 0; k<lLocalKeyObjects.size(); k++){
+                        double MeanError = 0;
+                        for (int l = 0; l<lLocalKeyObjects[k].size(); l++){
+                            pair<KeyFrame*, int> comparePair = lLocalKeyObjects[k][l];
+                            MeanError+= ComputeObjectPoseDistance(currentPair.first->mvKeyObjList[currentPair.second].mTcw,
+                                                                  currentPair.first->GetPose(),
+                                                                  comparePair.first->mvKeyObjList[comparePair.second].mTcw,
+                                                                  comparePair.first->GetPose());
+                        }
+                        if(MeanError==0){
+                            MeanError = numeric_limits<double>::max();
+                        }
+                        MeanError /= static_cast<double>(lLocalKeyObjects[k].size());
+                        MeanErrorVector.push_back(MeanError);
+                    }
+                    double minError = *min_element(MeanErrorVector.begin(), MeanErrorVector.end());
+                    unsigned int minPosition = min_element(MeanErrorVector.begin(),MeanErrorVector.end()) - MeanErrorVector.begin();
+                    // cout << "KeyFrame(i), Object(j), MinPosition(k), MeanError: " << i << ", " << j << ", " << minPosition << ", " << minError << endl;
+                    if(minError<5.0){
+                        lLocalKeyObjects[minPosition].push_back(currentPair);
+                    } else {
+                        vector<pair<KeyFrame*, unsigned int>> initialVector;
+                        initialVector.push_back(currentPair);
+                        lLocalKeyObjects.push_back(initialVector);
+                    }
+                }
+            }
+        }
+        // cout << endl;
+    }
 
   // NOTE: 去除只有一个元素的物体观察列表
   vector<bool> lValidLocalKeyObjects;
   vector<vector<unsigned int>> lLocalKeyObjectsIndex;
   for (unsigned int i = 0; i<lLocalKeyObjects.size(); i++) {
-      unsigned int kfQuantity = 0;
-      vector<unsigned int> currentIndexVector;
-      for (unsigned int j = 0; j<lLocalKeyObjects[i].size(); j++) {
-          if(j==0) {
-              kfQuantity += 1;
-              currentIndexVector.push_back(j);
-          } else {
-              if(lLocalKeyObjects[i][j].first!=lLocalKeyObjects[i][j-1].first) {
-                  kfQuantity += 1;
-                  currentIndexVector.push_back(j);
-              }
-          }
-      }
-      lLocalKeyObjectsIndex.push_back(currentIndexVector);
-      if(kfQuantity<2){
-          // cout << "lLocalKeyObjects[i].size() " << lLocalKeyObjects[i].size() << " false" << endl;
-          lValidLocalKeyObjects.push_back(false);
-      } else {
-          // cout << "lLocalKeyObjects[i].size() " << lLocalKeyObjects[i].size() << " true" << endl;
-          lValidLocalKeyObjects.push_back(true);
-      }
-  }
+        unsigned int kfQuantity = 0;
+        vector<unsigned int> currentIndexVector;
+        for (unsigned int j = 0; j<lLocalKeyObjects[i].size(); j++) {
+            if(j==0) {
+                kfQuantity += 1;
+                currentIndexVector.push_back(j);
+            } else {
+                if(lLocalKeyObjects[i][j].first!=lLocalKeyObjects[i][j-1].first) {
+                    kfQuantity += 1;
+                    currentIndexVector.push_back(j);
+                }
+            }
+        }
+        lLocalKeyObjectsIndex.push_back(currentIndexVector);
+        if(kfQuantity<2){
+            // cout << "lLocalKeyObjects[i].size() " << lLocalKeyObjects[i].size() << " false" << endl;
+            lValidLocalKeyObjects.push_back(false);
+        } else {
+            // cout << "lLocalKeyObjects[i].size() " << lLocalKeyObjects[i].size() << " true" << endl;
+            lValidLocalKeyObjects.push_back(true);
+        }
+    }
   // cout << "lLocalKeyObjects.size() " << lLocalKeyObjects.size() << endl;
   // cout << "lValidLocalKeyObjects.size() " << lValidLocalKeyObjects.size() << endl;
   // cout << "lLocalKeyObjectsIndex.size() " << lLocalKeyObjectsIndex.size() << endl;
 
   // NOTE: 矫正同一帧中处于相同物体观察列表的位姿
   for(unsigned int i = 0; i<lLocalKeyObjectsIndex.size(); i++){
-      for(unsigned int j = 0; j<lLocalKeyObjectsIndex[i].size(); j++){
-          if(j==0){
-              continue;
-          } else {
-              if (lLocalKeyObjectsIndex[i][j]-lLocalKeyObjectsIndex[i][j-1]!=1) {
-                  KeyFrame* cKeyF = lLocalKeyObjects[i][lLocalKeyObjectsIndex[i][j-1]].first;
-                  unsigned int cObjI = lLocalKeyObjects[i][lLocalKeyObjectsIndex[i][j-1]].second;
-                  cv::Mat MeanTcw = cKeyF->mvKeyObjList[cObjI].mTcw;
-                  for(unsigned int k=lLocalKeyObjectsIndex[i][j-1]+1; k<lLocalKeyObjectsIndex[i][j]; k++)
-                  {
-                      cKeyF = lLocalKeyObjects[i][k].first;
-                      cObjI = lLocalKeyObjects[i][k].second;
-                      MeanTcw += cKeyF->mvKeyObjList[cObjI].mTcw;
-                  }
-                  MeanTcw /= lLocalKeyObjectsIndex[i][j]-lLocalKeyObjectsIndex[i][j-1];
-                  for(unsigned int k=lLocalKeyObjectsIndex[i][j-1]; k<lLocalKeyObjectsIndex[i][j]; k++)
-                  {
-                      cKeyF = lLocalKeyObjects[i][k].first;
-                      cObjI = lLocalKeyObjects[i][k].second;
-                      cKeyF->mvKeyObjList[cObjI].SetTcw(MeanTcw);
-                  }
-              }
-          }
-      }
-  }
+        for(unsigned int j = 0; j<lLocalKeyObjectsIndex[i].size(); j++){
+            if(j==0){
+                continue;
+            } else {
+                if (lLocalKeyObjectsIndex[i][j]-lLocalKeyObjectsIndex[i][j-1]!=1) {
+                    KeyFrame* cKeyF = lLocalKeyObjects[i][lLocalKeyObjectsIndex[i][j-1]].first;
+                    unsigned int cObjI = lLocalKeyObjects[i][lLocalKeyObjectsIndex[i][j-1]].second;
+                    cv::Mat MeanTcw = cKeyF->mvKeyObjList[cObjI].mTcw;
+                    for(unsigned int k=lLocalKeyObjectsIndex[i][j-1]+1; k<lLocalKeyObjectsIndex[i][j]; k++)
+                    {
+                        cKeyF = lLocalKeyObjects[i][k].first;
+                        cObjI = lLocalKeyObjects[i][k].second;
+                        MeanTcw += cKeyF->mvKeyObjList[cObjI].mTcw;
+                    }
+                    MeanTcw /= lLocalKeyObjectsIndex[i][j]-lLocalKeyObjectsIndex[i][j-1];
+                    for(unsigned int k=lLocalKeyObjectsIndex[i][j-1]; k<lLocalKeyObjectsIndex[i][j]; k++)
+                    {
+                        cKeyF = lLocalKeyObjects[i][k].first;
+                        cObjI = lLocalKeyObjects[i][k].second;
+                        cKeyF->mvKeyObjList[cObjI].SetTcw(MeanTcw);
+                    }
+                }
+            }
+        }
+    }
 
-  // Setup optimizer
+  // NOTE: ObjSLAM
+  bool useLocalObjects = false;
+  bool useLocalPoints = true;
+
   g2o::SparseOptimizer optimizer;
   g2o::BlockSolver_6_3::LinearSolverType* linearSolver;
 
   linearSolver =
-      new g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>();
+          new g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>();
 
   g2o::BlockSolver_6_3* solver_ptr = new g2o::BlockSolver_6_3(linearSolver);
 
   g2o::OptimizationAlgorithmLevenberg* solver =
-      new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
+          new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
   optimizer.setAlgorithm(solver);
 
   if (pbStopFlag) optimizer.setForceStopFlag(pbStopFlag);
@@ -635,315 +638,328 @@ void Optimizer::LocalBundleAdjustment(KeyFrame* pKF, bool* pbStopFlag,
 
   // Set Local KeyFrame vertices
   for (list<KeyFrame*>::iterator lit = lLocalKeyFrames.begin(),
-                                 lend = lLocalKeyFrames.end();
+               lend = lLocalKeyFrames.end();
        lit != lend; lit++) {
-    KeyFrame* pKFi = *lit;
-    g2o::VertexSE3Expmap* vSE3 = new g2o::VertexSE3Expmap();
-    vSE3->setEstimate(Converter::toSE3Quat(pKFi->GetPose()));
-    vSE3->setId(pKFi->mnId);
-    vSE3->setFixed(pKFi->mnId == 0);
-    optimizer.addVertex(vSE3);
-    if (pKFi->mnId > maxKFid) maxKFid = pKFi->mnId;
-  }
+        KeyFrame* pKFi = *lit;
+        g2o::VertexSE3Expmap* vSE3 = new g2o::VertexSE3Expmap();
+        vSE3->setEstimate(Converter::toSE3Quat(pKFi->GetPose()));
+        vSE3->setId(pKFi->mnId);
+        vSE3->setFixed(pKFi->mnId == 0);
+        optimizer.addVertex(vSE3);
+        if (pKFi->mnId > maxKFid) maxKFid = pKFi->mnId;
+    }
 
   // Set Fixed KeyFrame vertices
   for (list<KeyFrame*>::iterator lit = lFixedCameras.begin(),
-                                 lend = lFixedCameras.end();
+               lend = lFixedCameras.end();
        lit != lend; lit++) {
-    KeyFrame* pKFi = *lit;
-    g2o::VertexSE3Expmap* vSE3 = new g2o::VertexSE3Expmap();
-    vSE3->setEstimate(Converter::toSE3Quat(pKFi->GetPose()));
-    vSE3->setId(pKFi->mnId);
-    vSE3->setFixed(true);
-    optimizer.addVertex(vSE3);
-    if (pKFi->mnId > maxKFid) maxKFid = pKFi->mnId;
-  }
+        KeyFrame* pKFi = *lit;
+        g2o::VertexSE3Expmap* vSE3 = new g2o::VertexSE3Expmap();
+        vSE3->setEstimate(Converter::toSE3Quat(pKFi->GetPose()));
+        vSE3->setId(pKFi->mnId);
+        vSE3->setFixed(true);
+        optimizer.addVertex(vSE3);
+        if (pKFi->mnId > maxKFid) maxKFid = pKFi->mnId;
+    }
 
   // NOTE: ObjSLAM
-  unsigned long maxMPid = 0;
+  unsigned long maxMPid = maxKFid;
 
-  // Set MapPoint vertices
-  const int nExpectedSize =
-      (lLocalKeyFrames.size() + lFixedCameras.size()) * lLocalMapPoints.size();
+  // NOTE: ObjSLAM Setip optimizer
+  if(useLocalPoints){
+      // Set MapPoint vertices
+      const int nExpectedSize =
+              (lLocalKeyFrames.size() + lFixedCameras.size()) * lLocalMapPoints.size();
 
-  vector<g2o::EdgeSE3ProjectXYZ*> vpEdgesMono;
-  vpEdgesMono.reserve(nExpectedSize);
+      vector<g2o::EdgeSE3ProjectXYZ*> vpEdgesMono;
+      vpEdgesMono.reserve(nExpectedSize);
 
-  vector<KeyFrame*> vpEdgeKFMono;
-  vpEdgeKFMono.reserve(nExpectedSize);
+      vector<KeyFrame*> vpEdgeKFMono;
+      vpEdgeKFMono.reserve(nExpectedSize);
 
-  vector<MapPoint*> vpMapPointEdgeMono;
-  vpMapPointEdgeMono.reserve(nExpectedSize);
+      vector<MapPoint*> vpMapPointEdgeMono;
+      vpMapPointEdgeMono.reserve(nExpectedSize);
 
-  vector<g2o::EdgeStereoSE3ProjectXYZ*> vpEdgesStereo;
-  vpEdgesStereo.reserve(nExpectedSize);
+      vector<g2o::EdgeStereoSE3ProjectXYZ*> vpEdgesStereo;
+      vpEdgesStereo.reserve(nExpectedSize);
 
-  vector<KeyFrame*> vpEdgeKFStereo;
-  vpEdgeKFStereo.reserve(nExpectedSize);
+      vector<KeyFrame*> vpEdgeKFStereo;
+      vpEdgeKFStereo.reserve(nExpectedSize);
 
-  vector<MapPoint*> vpMapPointEdgeStereo;
-  vpMapPointEdgeStereo.reserve(nExpectedSize);
+      vector<MapPoint*> vpMapPointEdgeStereo;
+      vpMapPointEdgeStereo.reserve(nExpectedSize);
 
-  const float thHuberMono = sqrt(5.991);
-  const float thHuberStereo = sqrt(7.815);
+      const float thHuberMono = sqrt(5.991);
+      const float thHuberStereo = sqrt(7.815);
 
-  for (list<MapPoint*>::iterator lit = lLocalMapPoints.begin(),
-                                 lend = lLocalMapPoints.end();
-       lit != lend; lit++) {
-    MapPoint* pMP = *lit;
-    g2o::VertexSBAPointXYZ* vPoint = new g2o::VertexSBAPointXYZ();
-    vPoint->setEstimate(Converter::toVector3d(pMP->GetWorldPos()));
-    int id = pMP->mnId + maxKFid + 1;
-    // NOTE: ObjSLAM
-    if (id > maxMPid) maxMPid = id;
-    vPoint->setId(id);
-    vPoint->setMarginalized(true);
-    optimizer.addVertex(vPoint);
+      for (list<MapPoint*>::iterator lit = lLocalMapPoints.begin(),
+                   lend = lLocalMapPoints.end();
+           lit != lend; lit++) {
+          MapPoint* pMP = *lit;
+          g2o::VertexSBAPointXYZ* vPoint = new g2o::VertexSBAPointXYZ();
+          vPoint->setEstimate(Converter::toVector3d(pMP->GetWorldPos()));
+          int id = pMP->mnId + maxKFid + 1;
+          vPoint->setId(id);
+          vPoint->setMarginalized(true);
+          optimizer.addVertex(vPoint);
+          // NOTE: ObjSLAM
+          if (id > maxMPid) maxMPid = id;
 
-    const map<KeyFrame*, size_t> observations = pMP->GetObservations();
+          const map<KeyFrame*, size_t> observations = pMP->GetObservations();
 
-    // Set edges
-    for (map<KeyFrame*, size_t>::const_iterator mit = observations.begin(),
-                                                mend = observations.end();
-         mit != mend; mit++) {
-      KeyFrame* pKFi = mit->first;
+          // Set edges
+          for (map<KeyFrame*, size_t>::const_iterator mit = observations.begin(),
+                       mend = observations.end();
+               mit != mend; mit++) {
+              KeyFrame* pKFi = mit->first;
 
-      if (!pKFi->isBad()) {
-        const cv::KeyPoint& kpUn = pKFi->mvKeysUn[mit->second];
+              if (!pKFi->isBad()) {
+                  const cv::KeyPoint& kpUn = pKFi->mvKeysUn[mit->second];
 
-        // Monocular observation
-        if (pKFi->mvuRight[mit->second] < 0) {
-          Eigen::Matrix<double, 2, 1> obs;
-          obs << kpUn.pt.x, kpUn.pt.y;
+                  // Monocular observation
+                  if (pKFi->mvuRight[mit->second] < 0) {
+                      Eigen::Matrix<double, 2, 1> obs;
+                      obs << kpUn.pt.x, kpUn.pt.y;
 
-          g2o::EdgeSE3ProjectXYZ* e = new g2o::EdgeSE3ProjectXYZ();
+                      g2o::EdgeSE3ProjectXYZ* e = new g2o::EdgeSE3ProjectXYZ();
 
-          e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(
+                      e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(
                               optimizer.vertex(id)));
-          e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(
+                      e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(
                               optimizer.vertex(pKFi->mnId)));
-          e->setMeasurement(obs);
-          const float& invSigma2 = pKFi->mvInvLevelSigma2[kpUn.octave];
-          e->setInformation(Eigen::Matrix2d::Identity() * invSigma2);
+                      e->setMeasurement(obs);
+                      const float& invSigma2 = pKFi->mvInvLevelSigma2[kpUn.octave];
+                      e->setInformation(Eigen::Matrix2d::Identity() * invSigma2);
 
-          g2o::RobustKernelHuber* rk = new g2o::RobustKernelHuber;
-          e->setRobustKernel(rk);
-          rk->setDelta(thHuberMono);
+                      g2o::RobustKernelHuber* rk = new g2o::RobustKernelHuber;
+                      e->setRobustKernel(rk);
+                      rk->setDelta(thHuberMono);
 
-          e->fx = pKFi->fx;
-          e->fy = pKFi->fy;
-          e->cx = pKFi->cx;
-          e->cy = pKFi->cy;
+                      e->fx = pKFi->fx;
+                      e->fy = pKFi->fy;
+                      e->cx = pKFi->cx;
+                      e->cy = pKFi->cy;
 
-          optimizer.addEdge(e);
-          vpEdgesMono.push_back(e);
-          vpEdgeKFMono.push_back(pKFi);
-          vpMapPointEdgeMono.push_back(pMP);
-        } else  // Stereo observation
-        {
-          Eigen::Matrix<double, 3, 1> obs;
-          const float kp_ur = pKFi->mvuRight[mit->second];
-          obs << kpUn.pt.x, kpUn.pt.y, kp_ur;
+                      optimizer.addEdge(e);
+                      vpEdgesMono.push_back(e);
+                      vpEdgeKFMono.push_back(pKFi);
+                      vpMapPointEdgeMono.push_back(pMP);
+                  } else  // Stereo observation
+                  {
+                      Eigen::Matrix<double, 3, 1> obs;
+                      const float kp_ur = pKFi->mvuRight[mit->second];
+                      obs << kpUn.pt.x, kpUn.pt.y, kp_ur;
 
-          g2o::EdgeStereoSE3ProjectXYZ* e = new g2o::EdgeStereoSE3ProjectXYZ();
+                      g2o::EdgeStereoSE3ProjectXYZ* e = new g2o::EdgeStereoSE3ProjectXYZ();
 
-          e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(
+                      e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(
                               optimizer.vertex(id)));
-          e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(
+                      e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(
                               optimizer.vertex(pKFi->mnId)));
-          e->setMeasurement(obs);
-          const float& invSigma2 = pKFi->mvInvLevelSigma2[kpUn.octave];
-          Eigen::Matrix3d Info = Eigen::Matrix3d::Identity() * invSigma2;
-          e->setInformation(Info);
+                      e->setMeasurement(obs);
+                      const float& invSigma2 = pKFi->mvInvLevelSigma2[kpUn.octave];
+                      Eigen::Matrix3d Info = Eigen::Matrix3d::Identity() * invSigma2;
+                      e->setInformation(Info);
 
-          g2o::RobustKernelHuber* rk = new g2o::RobustKernelHuber;
-          e->setRobustKernel(rk);
-          rk->setDelta(thHuberStereo);
+                      g2o::RobustKernelHuber* rk = new g2o::RobustKernelHuber;
+                      e->setRobustKernel(rk);
+                      rk->setDelta(thHuberStereo);
 
-          e->fx = pKFi->fx;
-          e->fy = pKFi->fy;
-          e->cx = pKFi->cx;
-          e->cy = pKFi->cy;
-          e->bf = pKFi->mbf;
+                      e->fx = pKFi->fx;
+                      e->fy = pKFi->fy;
+                      e->cx = pKFi->cx;
+                      e->cy = pKFi->cy;
+                      e->bf = pKFi->mbf;
 
-          optimizer.addEdge(e);
-          vpEdgesStereo.push_back(e);
-          vpEdgeKFStereo.push_back(pKFi);
-          vpMapPointEdgeStereo.push_back(pMP);
-        }
-      }
-    }
-  }
-
-  if (pbStopFlag)
-    if (*pbStopFlag) return;
-
-  optimizer.initializeOptimization();
-  optimizer.optimize(5);
-  bool bDoMore = true;
-  if (pbStopFlag)
-    if (*pbStopFlag) bDoMore = false;
-
-  if (bDoMore) {
-    // Check inlier observations
-    for (size_t i = 0, iend = vpEdgesMono.size(); i < iend; i++) {
-      g2o::EdgeSE3ProjectXYZ* e = vpEdgesMono[i];
-      MapPoint* pMP = vpMapPointEdgeMono[i];
-
-      if (pMP->isBad()) continue;
-
-      if (e->chi2() > 5.991 || !e->isDepthPositive()) {
-        e->setLevel(1);
+                      optimizer.addEdge(e);
+                      vpEdgesStereo.push_back(e);
+                      vpEdgeKFStereo.push_back(pKFi);
+                      vpMapPointEdgeStereo.push_back(pMP);
+                  }
+              }
+          }
       }
 
-      e->setRobustKernel(0);
-    }
+      if (pbStopFlag)
+          if (*pbStopFlag) return;
 
-    for (size_t i = 0, iend = vpEdgesStereo.size(); i < iend; i++) {
-      g2o::EdgeStereoSE3ProjectXYZ* e = vpEdgesStereo[i];
-      MapPoint* pMP = vpMapPointEdgeStereo[i];
+      optimizer.initializeOptimization();
+      optimizer.optimize(5);
+      bool bDoMore = true;
+      if (pbStopFlag)
+          if (*pbStopFlag) bDoMore = false;
 
-      if (pMP->isBad()) continue;
+      if (bDoMore) {
+          // Check inlier observations
+          for (size_t i = 0, iend = vpEdgesMono.size(); i < iend; i++) {
+              g2o::EdgeSE3ProjectXYZ* e = vpEdgesMono[i];
+              MapPoint* pMP = vpMapPointEdgeMono[i];
 
-      if (e->chi2() > 7.815 || !e->isDepthPositive()) {
-        e->setLevel(1);
+              if (pMP->isBad()) continue;
+
+              if (e->chi2() > 5.991 || !e->isDepthPositive()) {
+                  e->setLevel(1);
+              }
+
+              e->setRobustKernel(0);
+          }
+
+          for (size_t i = 0, iend = vpEdgesStereo.size(); i < iend; i++) {
+              g2o::EdgeStereoSE3ProjectXYZ* e = vpEdgesStereo[i];
+              MapPoint* pMP = vpMapPointEdgeStereo[i];
+
+              if (pMP->isBad()) continue;
+
+              if (e->chi2() > 7.815 || !e->isDepthPositive()) {
+                  e->setLevel(1);
+              }
+
+              e->setRobustKernel(0);
+          }
+
+          // Optimize again without the outliers
+
+          optimizer.initializeOptimization(0);
+          optimizer.optimize(10);
       }
 
-      e->setRobustKernel(0);
-    }
+      vector<pair<KeyFrame*, MapPoint*> > vToErase;
+      vToErase.reserve(vpEdgesMono.size() + vpEdgesStereo.size());
 
-    // Optimize again without the outliers
+      // Check inlier observations
+      for (size_t i = 0, iend = vpEdgesMono.size(); i < iend; i++) {
+          g2o::EdgeSE3ProjectXYZ* e = vpEdgesMono[i];
+          MapPoint* pMP = vpMapPointEdgeMono[i];
 
-    optimizer.initializeOptimization(0);
-    optimizer.optimize(10);
-  }
+          if (pMP->isBad()) continue;
 
-  vector<pair<KeyFrame*, MapPoint*> > vToErase;
-  vToErase.reserve(vpEdgesMono.size() + vpEdgesStereo.size());
-
-  // Check inlier observations
-  for (size_t i = 0, iend = vpEdgesMono.size(); i < iend; i++) {
-    g2o::EdgeSE3ProjectXYZ* e = vpEdgesMono[i];
-    MapPoint* pMP = vpMapPointEdgeMono[i];
-
-    if (pMP->isBad()) continue;
-
-    if (e->chi2() > 5.991 || !e->isDepthPositive()) {
-      KeyFrame* pKFi = vpEdgeKFMono[i];
-      vToErase.push_back(make_pair(pKFi, pMP));
-    }
-  }
-
-  for (size_t i = 0, iend = vpEdgesStereo.size(); i < iend; i++) {
-    g2o::EdgeStereoSE3ProjectXYZ* e = vpEdgesStereo[i];
-    MapPoint* pMP = vpMapPointEdgeStereo[i];
-
-    if (pMP->isBad()) continue;
-
-    if (e->chi2() > 7.815 || !e->isDepthPositive()) {
-      KeyFrame* pKFi = vpEdgeKFStereo[i];
-      vToErase.push_back(make_pair(pKFi, pMP));
-    }
-  }
-
-  // Get Map Mutex
-  unique_lock<mutex> lock(pMap->mMutexMapUpdate);
-
-  if (!vToErase.empty()) {
-    for (size_t i = 0; i < vToErase.size(); i++) {
-      KeyFrame* pKFi = vToErase[i].first;
-      MapPoint* pMPi = vToErase[i].second;
-      pKFi->EraseMapPointMatch(pMPi);
-      pMPi->EraseObservation(pKFi);
-    }
-  }
-
-  // NOTE: 设置 KeyObjects 的顶点和边
-  for(unsigned int i=0;i<lLocalKeyObjects.size();i++){
-    if(lValidLocalKeyObjects[i]){
-      // Set Vertex
-      g2o::VertexSE3Expmap* vSE3 = new g2o::VertexSE3Expmap();
-      KeyFrame* SrcFrame = lLocalKeyObjects[i][0].first;
-      unsigned int SrcObjIndex = lLocalKeyObjects[i][0].second;
-      cv::Mat SrcFrameTcw = SrcFrame->GetPose();
-      cv::Mat SrcObjectTcw = SrcFrame->mvKeyObjList[SrcObjIndex].mTcw;
-      cv::Mat ObjWorldTcw = SrcFrameTcw*SrcObjectTcw;
-      vSE3->setEstimate(Converter::toSE3Quat(ObjWorldTcw));
-      int id = i + maxMPid + 1;
-      vSE3->setId(id);
-      vSE3->setFixed(false);
-      optimizer.addVertex(vSE3);
-
-      // cout << "[INFO] Set Vertex Complete. i: " << i << " / " << lLocalKeyObjects.size() << endl;
-
-      for(unsigned int j=0;j<lLocalKeyObjectsIndex[i].size();j++){
-        unsigned int validIndex = lLocalKeyObjectsIndex[i][j];
-        SrcFrame = lLocalKeyObjects[i][validIndex].first;
-        SrcObjIndex = lLocalKeyObjects[i][validIndex].second;
-        g2o::EdgeSim3* e = new g2o::EdgeSim3();
-        if(optimizer.vertex(id) == NULL || optimizer.vertex(SrcFrame->mnId) == NULL) continue;
-        e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(
-                optimizer.vertex(id)));
-        e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(
-                optimizer.vertex(SrcFrame->mnId)));
-        Eigen::Matrix<double, 3, 3> Rcw =
-                Converter::toMatrix3d(SrcFrame->mvKeyObjList[SrcObjIndex].GetRotation());
-        Eigen::Matrix<double, 3, 1> tcw =
-                Converter::toVector3d(SrcFrame->mvKeyObjList[SrcObjIndex].GetTranslation());
-        g2o::Sim3 Sfo(Rcw, tcw, 1.0);
-        e->setMeasurement(Sfo);
-        e->information() = Eigen::Matrix<double, 7, 7>::Identity();
-        optimizer.addEdge(e);
-
-        // cout << "[INFO] Set Edge Complete. j: " << j << " / " << lLocalKeyObjectsIndex[i].size() << endl;
+          if (e->chi2() > 5.991 || !e->isDepthPositive()) {
+              KeyFrame* pKFi = vpEdgeKFMono[i];
+              vToErase.push_back(make_pair(pKFi, pMP));
+          }
       }
-    }
-  }
-  // cout << "[INFO] Done." << endl;
 
-  optimizer.optimize(5);
+      for (size_t i = 0, iend = vpEdgesStereo.size(); i < iend; i++) {
+          g2o::EdgeStereoSE3ProjectXYZ* e = vpEdgesStereo[i];
+          MapPoint* pMP = vpMapPointEdgeStereo[i];
+
+          if (pMP->isBad()) continue;
+
+          if (e->chi2() > 7.815 || !e->isDepthPositive()) {
+              KeyFrame* pKFi = vpEdgeKFStereo[i];
+              vToErase.push_back(make_pair(pKFi, pMP));
+          }
+      }
+
+      // Get Map Mutex
+      unique_lock<mutex> lock(pMap->mMutexMapUpdate);
+
+      if (!vToErase.empty()) {
+          for (size_t i = 0; i < vToErase.size(); i++) {
+              KeyFrame* pKFi = vToErase[i].first;
+              MapPoint* pMPi = vToErase[i].second;
+              pKFi->EraseMapPointMatch(pMPi);
+              pMPi->EraseObservation(pKFi);
+          }
+      }
+  }
 
   // Recover optimized data
 
   // Keyframes
   for (list<KeyFrame*>::iterator lit = lLocalKeyFrames.begin(),
-                                 lend = lLocalKeyFrames.end();
+               lend = lLocalKeyFrames.end();
        lit != lend; lit++) {
-    KeyFrame* pKF = *lit;
-    g2o::VertexSE3Expmap* vSE3 =
-        static_cast<g2o::VertexSE3Expmap*>(optimizer.vertex(pKF->mnId));
-    g2o::SE3Quat SE3quat = vSE3->estimate();
-    pKF->SetPose(Converter::toCvMat(SE3quat));
+      KeyFrame* pKF = *lit;
+      g2o::VertexSE3Expmap* vSE3 =
+              static_cast<g2o::VertexSE3Expmap*>(optimizer.vertex(pKF->mnId));
+      g2o::SE3Quat SE3quat = vSE3->estimate();
+      pKF->SetPose(Converter::toCvMat(SE3quat));
   }
 
-  // NOTE: 更新物体的位姿
-  for(unsigned int i=0;i<lLocalKeyObjects.size();i++){
-      if(lValidLocalKeyObjects[i]){
-          int id = i + maxMPid + 1;
-          g2o::VertexSE3Expmap* vSE3 =
-                  static_cast<g2o::VertexSE3Expmap*>(optimizer.vertex(id));
-          g2o::SE3Quat SE3quat = vSE3->estimate();
-          cv::Mat ObjWorldTcw = Converter::toCvMat(SE3quat);
-          for(unsigned int j=0;j<lLocalKeyObjects[i].size();j++) {
-              KeyFrame* SrcFrame = lLocalKeyObjects[i][j].first;
-              unsigned int SrcObjIndex = lLocalKeyObjects[i][j].second;
-              cv::Mat SrcFrameTcwInv;
-              cv::invert(SrcFrame->GetPose(), SrcFrameTcwInv);
-              SrcFrame->mvKeyObjList[SrcObjIndex].SetTcw(SrcFrameTcwInv*ObjWorldTcw);
+  // NOTE: ObjSLAM Points
+  if(useLocalPoints){
+        for (list<MapPoint*>::iterator lit = lLocalMapPoints.begin(),
+                     lend = lLocalMapPoints.end();
+             lit != lend; lit++) {
+            MapPoint* pMP = *lit;
+            g2o::VertexSBAPointXYZ* vPoint = static_cast<g2o::VertexSBAPointXYZ*>(
+                    optimizer.vertex(pMP->mnId + maxKFid + 1));
+            pMP->SetWorldPos(Converter::toCvMat(vPoint->estimate()));
+            pMP->UpdateNormalAndDepth();
+        }
+    }
+
+  // NOTE: ObjSLAM Setup optimizerObj
+  if(useLocalObjects){
+      // NOTE: 设置 KeyObjects 的顶点和边
+      for(unsigned int i=0;i<lLocalKeyObjects.size();i++){
+          if(lValidLocalKeyObjects[i]){
+              // Set Vertex
+              g2o::VertexSE3Expmap* vSE3 = new g2o::VertexSE3Expmap();
+              KeyFrame* SrcFrame = lLocalKeyObjects[i][0].first;
+              unsigned int SrcObjIndex = lLocalKeyObjects[i][0].second;
+              cv::Mat SrcFrameTcw = SrcFrame->GetPose();
+              cv::Mat SrcObjectTcw = SrcFrame->mvKeyObjList[SrcObjIndex].mTcw;
+              cv::Mat ObjWorldTcw = SrcFrameTcw*SrcObjectTcw;
+              vSE3->setEstimate(Converter::toSE3Quat(ObjWorldTcw));
+              int id = i + maxMPid + 1;
+              vSE3->setId(id);
+              vSE3->setFixed(false);
+              optimizer.addVertex(vSE3);
+
+              // cout << "[INFO] Set Vertex Complete. i: " << i << " / " << lLocalKeyObjects.size() << endl;
+
+              for(unsigned int j=0;j<lLocalKeyObjectsIndex[i].size();j++){
+                  unsigned int validIndex = lLocalKeyObjectsIndex[i][j];
+                  SrcFrame = lLocalKeyObjects[i][validIndex].first;
+                  SrcObjIndex = lLocalKeyObjects[i][validIndex].second;
+                  g2o::EdgeSE3Expmap* e = new g2o::EdgeSE3Expmap();
+                  if(optimizer.vertex(id) == NULL || optimizer.vertex(SrcFrame->mnId) == NULL) continue;
+                  e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex*>(
+                          optimizer.vertex(id)));
+                  e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(
+                          optimizer.vertex(SrcFrame->mnId)));
+                  e->setMeasurement(Converter::toSE3Quat(SrcFrame->mvKeyObjList[SrcObjIndex].mTcw));
+                  // e->information() = Eigen::Matrix<double, 7, 7>::Identity();
+                  optimizer.addEdge(e);
+
+                  // cout << "[INFO] Set Edge Complete. j: " << j << " / " << lLocalKeyObjectsIndex[i].size() << endl;
+              }
+          }
+      }
+      // cout << "[INFO] Done." << endl;
+
+      if (pbStopFlag)
+          if (*pbStopFlag) return;
+
+      optimizer.initializeOptimization();
+      optimizer.optimize(10);
+  }
+
+  // Recover optimized data
+
+  // NOTE: ObjSLAM Objects
+  if(useLocalObjects){
+      // NOTE: 更新物体的位姿
+      for(unsigned int i=0;i<lLocalKeyObjects.size();i++){
+          if(lValidLocalKeyObjects[i]){
+              int id = i + maxMPid + 1;
+              g2o::VertexSE3Expmap* vSE3 =
+                      static_cast<g2o::VertexSE3Expmap*>(optimizer.vertex(id));
+              g2o::SE3Quat SE3quat = vSE3->estimate();
+              cv::Mat ObjWorldTcw = Converter::toCvMat(SE3quat);
+              for(unsigned int j=0;j<lLocalKeyObjects[i].size();j++) {
+                  KeyFrame* SrcFrame = lLocalKeyObjects[i][j].first;
+                  unsigned int SrcObjIndex = lLocalKeyObjects[i][j].second;
+                  cv::Mat SrcFrameTcwInv;
+                  cv::invert(SrcFrame->GetPose(), SrcFrameTcwInv, cv::DECOMP_EIG);
+                  SrcFrame->mvKeyObjList[SrcObjIndex].SetTcw(SrcFrameTcwInv*ObjWorldTcw);
+              }
           }
       }
   }
 
-  // Points
-  for (list<MapPoint*>::iterator lit = lLocalMapPoints.begin(),
-                                 lend = lLocalMapPoints.end();
-       lit != lend; lit++) {
-    MapPoint* pMP = *lit;
-    g2o::VertexSBAPointXYZ* vPoint = static_cast<g2o::VertexSBAPointXYZ*>(
-        optimizer.vertex(pMP->mnId + maxKFid + 1));
-    pMP->SetWorldPos(Converter::toCvMat(vPoint->estimate()));
-    pMP->UpdateNormalAndDepth();
-  }
 }
 
 void Optimizer::OptimizeEssentialGraph(
