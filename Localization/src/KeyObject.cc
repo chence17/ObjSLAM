@@ -50,11 +50,22 @@ namespace ORB_SLAM2 {
         return this->mTcw.rowRange(0,3).col(3).clone();
     }
 
-    double ComputeObjectPoseDistance(const cv::Mat &SrcObjectTcw, const cv::Mat &SrcFrameTcw,
-                                     const cv::Mat &DstObjectTcw, const cv::Mat &DstFrameTcw) {
-        cv::Mat SrcObjWorldTcw = SrcFrameTcw*SrcObjectTcw;
-        cv::Mat DstObjWorldTcw = DstFrameTcw*DstObjectTcw;
+    double ComputeObjectDistance(const KeyObject &SrcObject, const cv::Mat &SrcFrameTcw,
+                                 const KeyObject &DstObject, const cv::Mat &DstFrameTcw,
+                                 double TcwWeight, double SizeWeight) {
+        cv::Mat SrcObjWorldTcw = SrcFrameTcw*SrcObject.mTcw;
+        cv::Mat DstObjWorldTcw = DstFrameTcw*DstObject.mTcw;
         cv::Mat Delta = SrcObjWorldTcw - DstObjWorldTcw;
-        return cv::norm(Delta, cv::NORM_L2);
+        double TcwError = cv::norm(Delta, cv::NORM_L2);
+        double SizeError = 0;
+        SizeError+=std::pow(SrcObject.mHeight-DstObject.mHeight, 2);
+        SizeError+=std::pow(SrcObject.mLength-DstObject.mLength, 2);
+        SizeError+=std::pow(SrcObject.mWidth-DstObject.mWidth, 2);
+        SizeError=std::sqrt(SizeError);
+        double ObjError = 0;
+        ObjError+=TcwWeight*std::pow(TcwError, 2);
+        ObjError+=SizeWeight*std::pow(SizeError, 2);
+        ObjError=std::sqrt(ObjError);
+        return ObjError;
     }
 } // namespace ORB_SLAM2

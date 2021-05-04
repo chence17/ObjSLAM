@@ -414,6 +414,11 @@ int Optimizer::PoseOptimization(Frame* pFrame) {
 
 void Optimizer::LocalBundleAdjustment(KeyFrame* pKF, bool* pbStopFlag,
                                       Map* pMap) {
+  // NOTE: ObjSLAM
+  bool useLocalObjects = true;
+  bool useLocalPoints = true;
+  float objectErrorMaximum = 2.0;
+
   // Local KeyFrames: First Breath Search from Current Keyframe
   list<KeyFrame*> lLocalKeyFrames;
 
@@ -447,10 +452,11 @@ void Optimizer::LocalBundleAdjustment(KeyFrame* pKF, bool* pbStopFlag,
                         double MeanError = 0;
                         for (int l = 0; l<lLocalKeyObjects[k].size(); l++){
                             pair<KeyFrame*, int> comparePair = lLocalKeyObjects[k][l];
-                            MeanError+= ComputeObjectPoseDistance(currentPair.first->mvKeyObjList[currentPair.second].mTcw,
-                                                                  currentPair.first->GetPose(),
-                                                                  comparePair.first->mvKeyObjList[comparePair.second].mTcw,
-                                                                  comparePair.first->GetPose());
+                            MeanError+= ComputeObjectDistance(currentPair.first->mvKeyObjList[currentPair.second],
+                                                              currentPair.first->GetPose(),
+                                                              comparePair.first->mvKeyObjList[comparePair.second],
+                                                              comparePair.first->GetPose(),
+                                                              1.0, 1.0);
                         }
                         if(MeanError==0){
                             MeanError = numeric_limits<double>::max();
@@ -461,7 +467,7 @@ void Optimizer::LocalBundleAdjustment(KeyFrame* pKF, bool* pbStopFlag,
                     double minError = *min_element(MeanErrorVector.begin(), MeanErrorVector.end());
                     unsigned int minPosition = min_element(MeanErrorVector.begin(),MeanErrorVector.end()) - MeanErrorVector.begin();
                     // cout << "KeyFrame(i), Object(j), MinPosition(k), MeanError: " << i << ", " << j << ", " << minPosition << ", " << minError << endl;
-                    if(minError<0.5){
+                    if(minError<objectErrorMaximum){
                         lLocalKeyObjects[minPosition].push_back(currentPair);
                     } else {
                         vector<pair<KeyFrame*, unsigned int>> initialVector;
@@ -531,10 +537,11 @@ void Optimizer::LocalBundleAdjustment(KeyFrame* pKF, bool* pbStopFlag,
                         double MeanError = 0;
                         for (int l = 0; l<lLocalKeyObjects[k].size(); l++){
                             pair<KeyFrame*, int> comparePair = lLocalKeyObjects[k][l];
-                            MeanError+= ComputeObjectPoseDistance(currentPair.first->mvKeyObjList[currentPair.second].mTcw,
-                                                                  currentPair.first->GetPose(),
-                                                                  comparePair.first->mvKeyObjList[comparePair.second].mTcw,
-                                                                  comparePair.first->GetPose());
+                            MeanError+= ComputeObjectDistance(currentPair.first->mvKeyObjList[currentPair.second],
+                                                              currentPair.first->GetPose(),
+                                                              comparePair.first->mvKeyObjList[comparePair.second],
+                                                              comparePair.first->GetPose(),
+                                                              1.0, 1.0);
                         }
                         if(MeanError==0){
                             MeanError = numeric_limits<double>::max();
@@ -545,7 +552,7 @@ void Optimizer::LocalBundleAdjustment(KeyFrame* pKF, bool* pbStopFlag,
                     double minError = *min_element(MeanErrorVector.begin(), MeanErrorVector.end());
                     unsigned int minPosition = min_element(MeanErrorVector.begin(),MeanErrorVector.end()) - MeanErrorVector.begin();
                     // cout << "KeyFrame(i), Object(j), MinPosition(k), MeanError: " << i << ", " << j << ", " << minPosition << ", " << minError << endl;
-                    if(minError<5.0){
+                    if(minError<objectErrorMaximum){
                         lLocalKeyObjects[minPosition].push_back(currentPair);
                     } else {
                         vector<pair<KeyFrame*, unsigned int>> initialVector;
@@ -616,10 +623,6 @@ void Optimizer::LocalBundleAdjustment(KeyFrame* pKF, bool* pbStopFlag,
         }
     }
 
-  // NOTE: ObjSLAM
-  bool useLocalObjects = false;
-  bool useLocalPoints = true;
-
   g2o::SparseOptimizer optimizer;
   g2o::BlockSolver_6_3::LinearSolverType* linearSolver;
 
@@ -665,7 +668,7 @@ void Optimizer::LocalBundleAdjustment(KeyFrame* pKF, bool* pbStopFlag,
   // NOTE: ObjSLAM
   unsigned long maxMPid = maxKFid;
 
-  // NOTE: ObjSLAM Setip optimizer
+  // NOTE: ObjSLAM Setup optimizer
   if(useLocalPoints){
       // Set MapPoint vertices
       const int nExpectedSize =
@@ -862,33 +865,31 @@ void Optimizer::LocalBundleAdjustment(KeyFrame* pKF, bool* pbStopFlag,
               pMPi->EraseObservation(pKFi);
           }
       }
+
+      // Recover optimized data
+
+      // Keyframes
+      for (list<KeyFrame*>::iterator lit = lLocalKeyFrames.begin(),
+                   lend = lLocalKeyFrames.end();
+           lit != lend; lit++) {
+          KeyFrame* pKF = *lit;
+          g2o::VertexSE3Expmap* vSE3 =
+                  static_cast<g2o::VertexSE3Expmap*>(optimizer.vertex(pKF->mnId));
+          g2o::SE3Quat SE3quat = vSE3->estimate();
+          pKF->SetPose(Converter::toCvMat(SE3quat));
+      }
+
+      // Map Points
+      for (list<MapPoint*>::iterator lit = lLocalMapPoints.begin(),
+                   lend = lLocalMapPoints.end();
+           lit != lend; lit++) {
+          MapPoint* pMP = *lit;
+          g2o::VertexSBAPointXYZ* vPoint =
+                  static_cast<g2o::VertexSBAPointXYZ*>(optimizer.vertex(pMP->mnId + maxKFid + 1));
+          pMP->SetWorldPos(Converter::toCvMat(vPoint->estimate()));
+          pMP->UpdateNormalAndDepth();
+      }
   }
-
-  // Recover optimized data
-
-  // Keyframes
-  for (list<KeyFrame*>::iterator lit = lLocalKeyFrames.begin(),
-               lend = lLocalKeyFrames.end();
-       lit != lend; lit++) {
-      KeyFrame* pKF = *lit;
-      g2o::VertexSE3Expmap* vSE3 =
-              static_cast<g2o::VertexSE3Expmap*>(optimizer.vertex(pKF->mnId));
-      g2o::SE3Quat SE3quat = vSE3->estimate();
-      pKF->SetPose(Converter::toCvMat(SE3quat));
-  }
-
-  // NOTE: ObjSLAM Points
-  if(useLocalPoints){
-        for (list<MapPoint*>::iterator lit = lLocalMapPoints.begin(),
-                     lend = lLocalMapPoints.end();
-             lit != lend; lit++) {
-            MapPoint* pMP = *lit;
-            g2o::VertexSBAPointXYZ* vPoint = static_cast<g2o::VertexSBAPointXYZ*>(
-                    optimizer.vertex(pMP->mnId + maxKFid + 1));
-            pMP->SetWorldPos(Converter::toCvMat(vPoint->estimate()));
-            pMP->UpdateNormalAndDepth();
-        }
-    }
 
   // NOTE: ObjSLAM Setup optimizerObj
   if(useLocalObjects){
@@ -899,9 +900,14 @@ void Optimizer::LocalBundleAdjustment(KeyFrame* pKF, bool* pbStopFlag,
               g2o::VertexSE3Expmap* vSE3 = new g2o::VertexSE3Expmap();
               KeyFrame* SrcFrame = lLocalKeyObjects[i][0].first;
               unsigned int SrcObjIndex = lLocalKeyObjects[i][0].second;
-              cv::Mat SrcFrameTcw = SrcFrame->GetPose();
+              g2o::VertexSE3Expmap* vSE3Frame =
+                      static_cast<g2o::VertexSE3Expmap*>(optimizer.vertex(SrcFrame->mnId));
+              g2o::SE3Quat SE3quatFrame = vSE3Frame->estimate();
+              cv::Mat SrcFrameTcw = Converter::toCvMat(SE3quatFrame);
               cv::Mat SrcObjectTcw = SrcFrame->mvKeyObjList[SrcObjIndex].mTcw;
-              cv::Mat ObjWorldTcw = SrcFrameTcw*SrcObjectTcw;
+              cv::Mat SrcObjectTcwInv;
+              cv::invert(SrcObjectTcw, SrcObjectTcwInv, cv::DECOMP_LU);
+              cv::Mat ObjWorldTcw = SrcObjectTcwInv*SrcFrameTcw;
               vSE3->setEstimate(Converter::toSE3Quat(ObjWorldTcw));
               int id = i + maxMPid + 1;
               vSE3->setId(id);
@@ -921,7 +927,7 @@ void Optimizer::LocalBundleAdjustment(KeyFrame* pKF, bool* pbStopFlag,
                   e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex*>(
                           optimizer.vertex(SrcFrame->mnId)));
                   e->setMeasurement(Converter::toSE3Quat(SrcFrame->mvKeyObjList[SrcObjIndex].mTcw));
-                  // e->information() = Eigen::Matrix<double, 7, 7>::Identity();
+                  e->information() = Eigen::Matrix<double, 6, 6>::Identity();
                   optimizer.addEdge(e);
 
                   // cout << "[INFO] Set Edge Complete. j: " << j << " / " << lLocalKeyObjectsIndex[i].size() << endl;
@@ -935,13 +941,21 @@ void Optimizer::LocalBundleAdjustment(KeyFrame* pKF, bool* pbStopFlag,
 
       optimizer.initializeOptimization();
       optimizer.optimize(10);
-  }
 
-  // Recover optimized data
+      // Recover optimized data
 
-  // NOTE: ObjSLAM Objects
-  if(useLocalObjects){
-      // NOTE: 更新物体的位姿
+      // Keyframes
+      for (list<KeyFrame*>::iterator lit = lLocalKeyFrames.begin(),
+                   lend = lLocalKeyFrames.end();
+           lit != lend; lit++) {
+          KeyFrame* pKF = *lit;
+          g2o::VertexSE3Expmap* vSE3 =
+                  static_cast<g2o::VertexSE3Expmap*>(optimizer.vertex(pKF->mnId));
+          g2o::SE3Quat SE3quat = vSE3->estimate();
+          pKF->SetPose(Converter::toCvMat(SE3quat));
+      }
+
+      // Objects
       for(unsigned int i=0;i<lLocalKeyObjects.size();i++){
           if(lValidLocalKeyObjects[i]){
               int id = i + maxMPid + 1;
@@ -959,7 +973,6 @@ void Optimizer::LocalBundleAdjustment(KeyFrame* pKF, bool* pbStopFlag,
           }
       }
   }
-
 }
 
 void Optimizer::OptimizeEssentialGraph(

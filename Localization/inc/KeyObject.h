@@ -38,7 +38,9 @@ namespace ORB_SLAM2 {
         cv::Mat GetTranslation();
 };
 
-    double ComputeObjectPoseDistance(const cv::Mat& SrcObj, const cv::Mat& SrcFrameTcw, const cv::Mat& DstObj, const cv::Mat& DstFrameTcw);
+    double ComputeObjectDistance(const KeyObject &SrcObject, const cv::Mat &SrcFrameTcw,
+                                 const KeyObject &DstObject, const cv::Mat &DstFrameTcw,
+                                 double TcwWeight, double SizeWeight);
 
 }  // namespace ORB_SLAM2
 
