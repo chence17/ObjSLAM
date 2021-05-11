@@ -1,10 +1,10 @@
 '''
 Author: Antonio Chan
 Date: 2021-04-11 10:33:46
-LastEditTime: 2021-04-25 20:14:52
+LastEditTime: 2021-05-05 17:30:27
 LastEditors: Antonio Chan
 Description: Description
-FilePath: /src/server.py
+FilePath: /undefined/home/antonio/Desktop/ObjSLAM/Detection/src/server.py
 '''
 
 # https://blog.csdn.net/shyjhyp11/article/details/109891396
@@ -15,6 +15,7 @@ from utils.evaluation_utils import post_processing, rescale_boxes, post_processi
 from utils.misc import make_folder
 from models.model_utils import create_model
 from data_process.kitti_dataloader import create_test_dataloader
+from data_process.kitti_dataloader import create_test_dataset
 from data_process import kitti_data_utils, kitti_bev_utils
 import config.kitti_config as cnf
 import socket
@@ -139,9 +140,11 @@ class SocketServer:
 
         self.model.eval()
 
-        self.test_dataloader = create_test_dataloader(self.configs)
-        self.test_dataloader_iter = self.test_dataloader._get_iterator()
+        # self.test_dataloader = create_test_dataloader(self.configs)
+        # self.test_dataloader_iter = self.test_dataloader._get_iterator()
+        self.test_dataset = create_test_dataset(self.configs)
         self.batch_idx = 0
+        self.need_create_window = True
 
     def start_server(self):
         while True:
@@ -153,11 +156,11 @@ class SocketServer:
             # t.start()
             self.client_recv(client, address)
             print(">  -------Done for this client. -------")
+            cv2.destroyAllWindows()
+            self.need_create_window = True
 
     def client_recv(self, client, address):
         while True:
-            # NOTE ObjSLAM
-            cv2.namedWindow("YOLO", flags=cv2.WINDOW_GUI_NORMAL)
             # read message from socket
             # client_msg_0\x00\x00\x00\x00\x00...
             msg = client.recv(1024).decode("utf-8")
@@ -181,14 +184,20 @@ class SocketServer:
                       time.localtime(time.time())), "-------")
                 print("> receive the msg from client : {0}".format(msg))
                 print('> inference for {0}'.format(msg))
+                if(self.need_create_window):
+                    # NOTE ObjSLAM
+                    cv2.namedWindow("YOLO", flags=cv2.WINDOW_GUI_NORMAL)
+                    self.need_create_window = False
                 # Inference
                 with torch.no_grad():
-                    img_paths, imgs_bev = self.test_dataloader_iter.next()
+                    # img_paths, imgs_bev = self.test_dataloader_iter.next()
+                    img_paths, imgs_bev = self.test_dataset[int(msg)]
+                    img_paths = [img_paths]
+                    imgs_bev = torch.from_numpy(
+                        np.expand_dims(imgs_bev, axis=0))
                     input_imgs = imgs_bev.to(
                         device=self.configs.device).float()
-                    t1 = time_synchronized()
                     outputs = self.model(input_imgs)
-                    t2 = time_synchronized()
                     detections = post_processing_v2(
                         outputs, conf_thresh=self.configs.conf_thresh, nms_thresh=self.configs.nms_thresh)
 
@@ -236,12 +245,7 @@ class SocketServer:
                             frame_object['box3d_pts_2d'] = box3d_pts_2d[:8, :]
                         frame_object_list.append(frame_object)
                     result = json.dumps(frame_object_list, cls=NumpyEncoder)
-                    print('> Done testing the {}th sample, time: {:.1f}ms, speed {:.2f}FPS'.format(
-                        self.batch_idx, (t2 - t1) * 1000, 1 / (t2 - t1)))
                     img_bev = cv2.flip(cv2.flip(img_bev, 0), 1)
-                    cv2.putText(img_bev, "FPS: %02d" % (int(1 / (t2 - t1))),
-                                (20, 30), cv2.FONT_HERSHEY_COMPLEX, 1.0,
-                                (255, 255, 255), 2)
                     scale = 1.5
                     cv2.resizeWindow("YOLO",
                                      width=int(img_bev.shape[1] * scale),

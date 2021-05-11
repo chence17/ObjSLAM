@@ -8,15 +8,14 @@
 # Description: This script for creating the dataloader for training/validation/test phase
 """
 
+from data_process.transformation import Compose, OneOf, Random_Rotation, Random_Scaling, Horizontal_Flip, Cutout
+from data_process.kitti_dataset import KittiDataset
 import sys
 
 import torch
 from torch.utils.data import DataLoader
 
 sys.path.append('../')
-
-from data_process.kitti_dataset import KittiDataset
-from data_process.transformation import Compose, OneOf, Random_Rotation, Random_Scaling, Horizontal_Flip, Cutout
 
 
 def create_train_dataloader(configs):
@@ -39,7 +38,8 @@ def create_train_dataloader(configs):
                                  random_padding=configs.random_padding)
     train_sampler = None
     if configs.distributed:
-        train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
+        train_sampler = torch.utils.data.distributed.DistributedSampler(
+            train_dataset)
     train_dataloader = DataLoader(train_dataset, batch_size=configs.batch_size, shuffle=(train_sampler is None),
                                   pin_memory=configs.pin_memory, num_workers=configs.num_workers, sampler=train_sampler,
                                   collate_fn=train_dataset.collate_fn)
@@ -53,7 +53,8 @@ def create_val_dataloader(configs):
     val_dataset = KittiDataset(configs.dataset_dir, mode='val', lidar_transforms=None, aug_transforms=None,
                                multiscale=False, num_samples=configs.num_samples, mosaic=False, random_padding=False)
     if configs.distributed:
-        val_sampler = torch.utils.data.distributed.DistributedSampler(val_dataset, shuffle=False)
+        val_sampler = torch.utils.data.distributed.DistributedSampler(
+            val_dataset, shuffle=False)
     val_dataloader = DataLoader(val_dataset, batch_size=configs.batch_size, shuffle=False,
                                 pin_memory=configs.pin_memory, num_workers=configs.num_workers, sampler=val_sampler,
                                 collate_fn=val_dataset.collate_fn)
@@ -68,11 +69,22 @@ def create_test_dataloader(configs):
                                 multiscale=False, num_samples=configs.num_samples, mosaic=False, random_padding=False)
     test_sampler = None
     if configs.distributed:
-        test_sampler = torch.utils.data.distributed.DistributedSampler(test_dataset)
+        test_sampler = torch.utils.data.distributed.DistributedSampler(
+            test_dataset)
     test_dataloader = DataLoader(test_dataset, batch_size=configs.batch_size, shuffle=False,
                                  pin_memory=configs.pin_memory, num_workers=configs.num_workers, sampler=test_sampler)
 
     return test_dataloader
+
+
+def create_test_dataset(configs):
+    """Create dataloader for testing phase"""
+    test_dataset = KittiDataset(
+        configs.dataset_dir, mode='test', lidar_transforms=None,
+        aug_transforms=None, multiscale=False, num_samples=configs.num_samples,
+        mosaic=False, random_padding=False
+    )
+    return test_dataset
 
 
 if __name__ == '__main__':
@@ -88,7 +100,8 @@ if __name__ == '__main__':
     from utils.visualization_utils import show_image_with_boxes, merge_rgb_to_bev, invert_target
     import config.kitti_config as cnf
 
-    parser = argparse.ArgumentParser(description='Complexer YOLO Implementation')
+    parser = argparse.ArgumentParser(
+        description='Complexer YOLO Implementation')
 
     parser.add_argument('--img_size', type=int, default=608,
                         help='the size of input image')
@@ -128,7 +141,8 @@ if __name__ == '__main__':
 
     if configs.save_img:
         print('saving validation images')
-        configs.saved_dir = os.path.join(configs.dataset_dir, 'validation_data')
+        configs.saved_dir = os.path.join(
+            configs.dataset_dir, 'validation_data')
         if not os.path.isdir(configs.saved_dir):
             os.makedirs(configs.saved_dir)
 
@@ -145,9 +159,12 @@ if __name__ == '__main__':
         if not (configs.mosaic and configs.show_train_data):
             img_file = img_files[0]
             img_rgb = cv2.imread(img_file)
-            calib = kitti_data_utils.Calibration(img_file.replace(".png", ".txt").replace("image_2", "calib"))
-            objects_pred = invert_target(targets[:, 1:], calib, img_rgb.shape, RGB_Map=None)
-            img_rgb = show_image_with_boxes(img_rgb, objects_pred, calib, False)
+            calib = kitti_data_utils.Calibration(img_file.replace(
+                ".png", ".txt").replace("image_2", "calib"))
+            objects_pred = invert_target(
+                targets[:, 1:], calib, img_rgb.shape, RGB_Map=None)
+            img_rgb = show_image_with_boxes(
+                img_rgb, objects_pred, calib, False)
 
         # Rescale target
         targets[:, 2:6] *= configs.img_size
@@ -160,7 +177,8 @@ if __name__ == '__main__':
 
         for c, x, y, w, l, yaw in targets[:, 1:7].numpy():
             # Draw rotated box
-            bev_utils.drawRotatedBox(img_bev, x, y, w, l, yaw, cnf.colors[int(c)])
+            bev_utils.drawRotatedBox(
+                img_bev, x, y, w, l, yaw, cnf.colors[int(c)])
 
         img_bev = cv2.rotate(img_bev, cv2.ROTATE_180)
 
@@ -171,7 +189,8 @@ if __name__ == '__main__':
             else:
                 cv2.imshow('mosaic_sample', img_bev)
         else:
-            out_img = merge_rgb_to_bev(img_rgb, img_bev, output_width=configs.output_width)
+            out_img = merge_rgb_to_bev(
+                img_rgb, img_bev, output_width=configs.output_width)
             if configs.save_img:
                 fn = os.path.basename(img_file)
                 cv2.imwrite(os.path.join(configs.saved_dir, fn), out_img)
