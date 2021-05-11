@@ -39,6 +39,7 @@
 #include "MapDrawer.h"
 #include "System.h"
 #include "Socket.h"
+#include "PointCloudMap.h"
 
 #include <mutex>
 
@@ -70,6 +71,7 @@ public:
 
     // NOTE: ObjSLAM
     void SetSocket(Socket* pSocket);
+    void SetPointCloudMap(PointCloudMap* pPointCloudMap);
 
     // Load new settings
     // The focal lenght should be similar or scale prediction will fail when projecting points
@@ -222,6 +224,7 @@ protected:
 
     // Note: ObjSLAM
     Socket *mpSocket;
+    PointCloudMap *mpPointCloudMap;
 };
 
 } //namespace ORB_SLAM

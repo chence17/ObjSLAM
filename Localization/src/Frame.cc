@@ -58,7 +58,7 @@ Frame::Frame(const Frame &frame)
 }
 
 
-Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, ORBextractor* extractorLeft, ORBextractor* extractorRight, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth, nlohmann::json &kol)
+Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, ORBextractor* extractorLeft, ORBextractor* extractorRight, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth, vector<KeyObject> &kol)
     :mpORBvocabulary(voc),mpORBextractorLeft(extractorLeft),mpORBextractorRight(extractorRight), mTimeStamp(timeStamp), mK(K.clone()),mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth),
      mpReferenceKF(static_cast<KeyFrame*>(NULL))
 {
@@ -116,42 +116,7 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
     AssignFeaturesToGrid();
 
     // NOTE: ObjSLAM
-    for (auto& element : kol) {
-        if(element["type"].get<string>()=="Car"){
-            auto length = element["width"].get<float>();
-            auto width = element["height"].get<float>();
-            auto height = element["length"].get<float>();
-            auto theta = element["theta"].get<float>();
-            auto pi = static_cast<float>(M_PI);
-            if(theta<pi && theta>-pi/2){
-                theta = -theta + pi/2;
-            } else if(theta<-pi/2 && theta>-pi){
-                theta = -theta - pi - pi/2;
-            } else if(theta==pi || theta==-pi){
-                theta = -pi/2;
-            } else if(theta==-pi/2){
-                theta = pi;
-            }
-            bool valid = true;
-            CenterPoints center;
-            if(!element["center"].empty()){
-                center = element["center"].get<CenterPoints>();
-            } else {
-                center = {0.0, 0.0, 0.0};
-                valid = false;
-            }
-            Box2DPoints box2D;
-            if(!element["box3d_pts_2d"].empty()){
-                box2D = element["box3d_pts_2d"].get<Box2DPoints>();
-            } else {
-                for(auto& pt : box2D) {
-                    pt = {0.0, 0.0};
-                }
-                valid = false;
-            }
-            mvKeyObjList.emplace_back(center, length, width, height, theta, box2D, valid);
-        }
-    }
+    mvKeyObjList = kol;
 }
 
 Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeStamp, ORBextractor* extractor,ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth)

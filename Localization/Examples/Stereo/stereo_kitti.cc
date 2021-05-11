@@ -32,6 +32,9 @@ int main(int argc, char **argv) {
          << endl;
     return 1;
   }
+  // OBJSLAM
+  unsigned int frameQuantity = 0;
+  double averageFPS = 0;
 
   // Retrieve paths to images
   vector<string> vstrImageLeft;
@@ -91,6 +94,10 @@ int main(int argc, char **argv) {
         std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1)
             .count();
 
+    std::cout << "FPS: " << 1/ttrack << std::endl;
+    averageFPS = ((averageFPS*frameQuantity)+ 1/ttrack)/(frameQuantity+1);
+    frameQuantity += 1;
+
     vTimesTrack[ni] = ttrack;
 
     // Wait to load the next frame
@@ -115,6 +122,7 @@ int main(int argc, char **argv) {
   cout << "-------" << endl << endl;
   cout << "median tracking time: " << vTimesTrack[nImages / 2] << endl;
   cout << "mean tracking time: " << totaltime / nImages << endl;
+  cout << "average FPS: " << averageFPS << std::endl;
 
   // Save camera trajectory
   // 以KITTI格式存储相机轨迹数据

@@ -35,6 +35,7 @@
 #include "Socket.h"
 #include "Tracking.h"
 #include "Viewer.h"
+#include "PointCloudMap.h"
 
 namespace ORB_SLAM2 {
 
@@ -179,6 +180,8 @@ class System {
 
   // NOTE: Socket 通信
   Socket *mpSocket;
+  std::thread *mptSocket;
+  PointCloudMap *mpPointCloudMap;
 };
 
 }  // namespace ORB_SLAM2

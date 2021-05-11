@@ -1,3 +1,6 @@
 build/
 lib/
 cmake-build-debug/
+*.pcd
+CameraTrajectory.txt
+test.txt

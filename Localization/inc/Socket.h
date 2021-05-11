@@ -19,31 +19,51 @@
 #include <nlohmann/json.hpp>
 #include <string>
 
+#include "KeyObject.h"
+
 using json = nlohmann::json;
 
 namespace ORB_SLAM2 {
-class Socket {
- public:
-  Socket();
-  ~Socket();
-  json Receive();
+    class KeyObject;
 
- private:
-  //定义一个缓冲区
-  // char data[128];
-  char msgToServer[256];
-  char msgFromServer[16384];
+    class Socket {
+    public:
+        Socket(unsigned int initialFrameID, unsigned int maximumFrameID, unsigned int portNumber=6783);
+        ~Socket();
+        void Run();
+        std::vector<KeyObject> GetKeyObjects();
+        void SetFinish();
 
-  // io_service对象
-  boost::asio::io_service ios;
-  //创建socket对象
-  boost::asio::ip::tcp::socket sock;
-  //创建连接端
-  boost::asio::ip::tcp::endpoint ep;
+    private:
+        //定义一个缓冲区
+        char mDataToServer[256]{};
+        char mDataFromServer[16384]{};
 
-  // Frame ID
-  int i;
-};
+        // io_service对象
+        boost::asio::io_service ios;
+        //创建socket对象
+        boost::asio::ip::tcp::socket sock;
+        //创建连接端
+        boost::asio::ip::tcp::endpoint ep;
+
+        // Receive Status
+        bool mReceive;
+        // Stop
+        bool mFinish;
+        // Frame ID
+        unsigned int mFrameID;
+        // Maximum Frame ID
+        unsigned int mMaximumFrameID;
+
+        // Tread flag
+        std::mutex mMutexReceive;
+        std::mutex mMutexFinish;
+
+        void SetReceiveTrue();
+        void SetReceiveFalse();
+        bool CheckReceive();
+        bool CheckFinish();
+    };
 
 }  // namespace ORB_SLAM2
 

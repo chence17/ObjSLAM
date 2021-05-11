@@ -198,7 +198,7 @@ cv::Mat Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRe
     }
 
     // NOTE: Socket
-    json Detections = mpSocket->Receive();
+    std::vector<KeyObject> Detections = mpSocket->GetKeyObjects();
 
     mCurrentFrame = Frame(mImGray,imGrayRight,timestamp,mpORBextractorLeft,mpORBextractorRight,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,Detections);
     // NOTE: ObjSLAM
@@ -1144,6 +1144,8 @@ void Tracking::CreateNewKeyFrame()
 
     mnLastKeyFrameId = mCurrentFrame.mnId;
     mpLastKeyFrame = pKF;
+
+    mpPointCloudMap->InsertFrameID(pKF);
 }
 
 void Tracking::SearchLocalPoints()
@@ -1595,6 +1597,10 @@ void Tracking::InformOnlyTracking(const bool &flag)
 
 void Tracking::SetSocket(Socket* pSocket) {
     mpSocket = pSocket;
+}
+
+void Tracking::SetPointCloudMap(PointCloudMap *pPointCloudMap) {
+    mpPointCloudMap = pPointCloudMap;
 }
 
 

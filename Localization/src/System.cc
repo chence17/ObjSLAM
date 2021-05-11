@@ -90,7 +90,13 @@ System::System(const string &strVocFile, const string &strSettingsFile,
   mpMapDrawer = new MapDrawer(mpMap, strSettingsFile);
 
   // NOTE: Socket
-  mpSocket = new Socket();
+  this->mpSocket = new Socket(0, 4540);
+  mptSocket = new std::thread(&ORB_SLAM2::Socket::Run, mpSocket);
+  this->mpPointCloudMap = new PointCloudMap(
+          "/home/antonio/Desktop/KITTI/Visual Odometry - SLAM Evaluation 2012/data_odometry_velodyne/dataset/sequences/00/velodyne",
+          "/home/antonio/Desktop/ObjSLAM/Localization",
+          "test", 0.2
+  );
 
   // Initialize the Tracking thread
   //(it will live in the main thread of execution, the one that called this
@@ -119,6 +125,7 @@ System::System(const string &strVocFile, const string &strSettingsFile,
   mpTracker->SetLocalMapper(mpLocalMapper);
   mpTracker->SetLoopClosing(mpLoopCloser);
   mpTracker->SetSocket(mpSocket);
+  mpTracker->SetPointCloudMap(mpPointCloudMap);
 
   mpLocalMapper->SetTracker(mpTracker);
   mpLocalMapper->SetLoopCloser(mpLoopCloser);
@@ -310,6 +317,11 @@ void System::Shutdown() {
   }
 
   if (mpViewer) pangolin::BindToContext("ORB-SLAM2: Map Viewer");
+
+  this->mpPointCloudMap->GeneratePointCloud();
+  this->mpPointCloudMap->Generate3DBox();
+  this->mpPointCloudMap->ShowPointCloud();
+  this->mpPointCloudMap->SavePointCloud();
 }
 
 void System::SaveTrajectoryTUM(const string &filename) {
